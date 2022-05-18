@@ -3,12 +3,28 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "start": "PORT=3001 node ./bin/www"
+    "start": "node ./bin/www",
+    "dev": "PORT=3001 nodemon --watch './src/**/*.js' --exec 'node --experimental-specifier-resolution=node' ./bin/www",
+    "debug": "PORT=3001 node --inspect ./bin/www"
   },
+  "type": "module",
   "dependencies": {
+    "@babel/core": "^7.17.10",
+    "@babel/node": "^7.17.10",
+    "@babel/preset-env": "^7.17.10",
+    "@prisma/client": "^3.13.0",
+    "bcryptjs": "^2.4.3",
     "cookie-parser": "~1.4.4",
     "debug": "~2.6.9",
+    "dotenv": "^16.0.0",
     "express": "~4.16.1",
-    "morgan": "~1.9.1"
+    "express-validator": "^6.14.0",
+    "http-errors": "^2.0.0",
+    "jsonwebtoken": "^8.5.1",
+    "morgan": "~1.9.1",
+    "prisma": "^3.13.0",
+    "swagger-ui-express": "^4.3.0",
+    "twisted": "^1.46.8",
+    "yamljs": "^0.3.0"
   }
 }

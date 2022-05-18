@@ -1,147 +1,209 @@
-import React, { useState } from 'react';
-import { Button, Icon, Menu, Step } from 'semantic-ui-react';
+import React, { useEffect, useState } from 'react';
+import { Button, Icon, Loader, Message, Menu, Step } from 'semantic-ui-react';
+import { NotificationManager } from 'react-notifications';
+import { useParams, useNavigate } from 'react-router-dom';
+import API from '../api';
 import CreateScrimPool from './CreateScrimPool';
 import CreateScrimSelectCaptains from './CreateScrimSelectCaptains';
 import CreateScrimCoinflip from './CreateScrimCoinflip';
 import CreateScrimDraft from './CreateScrimDraft';
 import CreateScrimPlay from './CreateScrimPlay';
 
-const initialState = {
-    activeStep: 'pool',
-    activeStepOrder: 1,
-    steps: [
-        {name: 'pool', title: 'Pool', description: 'Add candidate players', icon: 'list ul', order: 1},
-        {name: 'select-captains', title: 'Select Captains', description: 'Choose who leads', icon: 'star outline', order: 2},
-        {name: 'coinflip', title: 'Coin Flip', description: 'Pray to the RNG gods', icon: 'dollar', order: 3},
-        {name: 'draft', title: 'Draft', description: 'Form teams', icon: 'user outline', order: 4},
-        {name: 'play', title: 'Play', description: 'Start playing!', icon: 'gamepad', order: 5}
-    ],
-    pool: [],
-    coinflipWinner: null,
-	draftFirst: null,
-	sideFirst: null,
-  	teams: [],
-	teamSize: 5,
-	autoDraft: false,
-	autoBalance: false,
-}
+const steps = [
+  {name: 'pool', title: 'Pool', description: 'Add candidate players', icon: 'list ul', order: 1},
+  {name: 'select-captains', title: 'Select Captains', description: 'Choose who leads', icon: 'star outline', order: 2},
+  {name: 'coinflip', title: 'Coin Flip', description: 'Pray to the RNG gods', icon: 'dollar', order: 3},
+  {name: 'draft', title: 'Draft', description: 'Cull the weak', icon: 'user outline', order: 4},
+  {name: 'play', title: 'Play', description: 'Start playing!', icon: 'gamepad', order: 5}
+];
 
 const CreateScrim = () => {
-    const [data, setData] = useState(initialState);
-    const [canContinue, setCanContinue] = useState(false);
+  const [data, setData] = useState();
+  const [canContinue, setCanContinue] = useState(false);
+  const [message, setMessage] = useState();
+  const [loading, setLoading] = useState(false);
+  const { id } = useParams();
+  const navigate = useNavigate();
 
-    const handleContinue = () => {
-		let activeStep = data.steps.find(step => step.order === data.activeStepOrder + 1).name;
-		let activeStepOrder = data.activeStepOrder + 1;
+  useEffect(() => {
+    const createScrim = async (redirect) => {
+      setLoading(true);
+      const scrim = await API.createScrim();
+      setData(scrim);
 
-		if(data.activeStepOrder === 1 && data.autoDraft) {
-			activeStep = 'play';
-			activeStepOrder = 5;
-		}
-        setData({
-            ...data,
-            activeStep,
-			activeStepOrder,
-        });
-
-        setCanContinue(false);
+      if(redirect) {
+        navigate('' + scrim.id);
+      }
     }
 
-    const handleBack = () => {
-        if(data.activeStepOrder > 1) {
-            setData({
-                ...data,
-                activeStep: data.steps.find(step => step.order === data.activeStepOrder - 1).name,
-                activeStepOrder: data.activeStepOrder - 1,
-             });
-        }
+    try {
+      if(!data && !loading) {
+        createScrim(!id);
+      }
+    } catch(err) {
+      NotificationManager.error('Error', err.response.data.error, 5000);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const handleContinue = async () => {
+    let stepIndex = steps.findIndex(step => step.name === data.step);
+    let step;
+
+    if(stepIndex === 0 && data.autoDraft) {
+      step = 'play';
+    } else {
+      step = steps[stepIndex + 1].name;
     }
 
-    const updatePoolData = ({ members, teamSize, autoDraft, autoBalance }) => {
-        setData({
-            ...data,
-            pool: [...members],
-			teamSize,
-			autoDraft,
-			autoBalance
-        });
-
-        setCanContinue(members.length >= teamSize * 2);
+    try {
+      setLoading(true);
+      await API.updateScrim({...data, step});
+    } catch(err) {
+      NotificationManager.error('Error', err.response.data.error, 5000);
+    } finally {
+      setLoading(false);
     }
 
-    const updateSelectCaptains = (members) => {
-        setData({
-            ...data,
-            members: [...members]
-        })
+    setData({
+      ...data,
+      step,
+    });
 
-        setCanContinue(members.filter(member => member.isCaptain).length >= 2);
+    setCanContinue(false);
+  }
+
+  const handleBack = async () => {
+    if(data.step !== 'pool') {
+      const stepIndex = steps.findIndex(step => step.name == data.step);
+
+      try {
+        setLoading(true);
+        await API.updateScrim({...data, step: steps[stepIndex-1].name});
+      } catch(err) {
+        NotificationManager.error('Error', err.response.data.error, 5000);
+      } finally {
+        setLoading(false);
+      }
+
+      setData({
+        ...data,
+        step: steps[stepIndex-1].name,
+      });
+    }
+  }
+
+  const updatePoolData = ({ members, teamSize, autoDraft, autoBalance }) => {
+    const newData = {
+      ...data,
+      pool: [...members],
+      teamSize,
+      autoDraft,
+      autoBalance
+    };
+
+    setData(newData);
+    setCanContinue(members.length >= teamSize * 2);
+  }
+
+  const updateSelectCaptains = (members) => {
+    const newData = {
+      ...data,
+      pool: [...members]
     }
 
-    const updateCoinflip = (result) => {
-		const captains = data.pool.filter(member => member.isCaptain);
-		const nextCaptain = captains[captains.findIndex(captain => captain.id === result.memberId) + 1 % (captains.length - 1)];
-		let draftFirst, sideFirst;
-		if(result.won && result.reward === 0 || (!result.won && result.reward === 1)) {
-			draftFirst = result.memberId;
-			sideFirst = nextCaptain.id;
-		} else {
-			draftFirst = nextCaptain.id;
-			sideFirst = result.memberId;
-		}
+    setData(newData);
+    setCanContinue(members.filter(member => member.isCaptain).length >= 2);
+  }
 
-		setData({
-			...data,
-			coinflipWinner: result.memberId,
-			draftFirst,
-			sideFirst
-		});
+  const updateCoinflip = ({ coinflipWinner, draftFirst, sideFirst }) => {
+    const newData = {
+      ...data,
+      coinflipWinner,
+      draftFirst,
+      sideFirst
+    };
 
-		setCanContinue(true);
-    }
+    setData(newData);
+    setCanContinue(true);
+  }
 
 	const updateDraft = (teams) => {
-		setData({
-			...data,
-			teams
-		});
+    const newData = {
+      ...data,
+      teams
+    };
 
+		setData(newData);
 		setCanContinue(teams.length > 0);
 	}
 
-    return (
+  const handleMessageClear = () => {
+		setMessage(null);
+	}
+
+  const handleError = (message) => {
+    NotificationManager.error(null, message, 5000);
+  }
+
+  return (
+    <div>
+      {loading && <Loader />}
+      {!loading && data &&
         <div>
-            <Step.Group widths={data.steps.length}>
-                {data.steps.map(step => (
-                    <Step key={step.name}
-                          active={step.name === data.activeStep}
-                          disabled={step.order > step.activeStepOrder}
-                          completed={step.order < step.activeStepOrder}>
-                        <Icon name={step.icon}></Icon>
-                        <Step.Content>
-                            <Step.Title>{step.title}</Step.Title>
-                            <Step.Description>{step.description}</Step.Description>
-                        </Step.Content>
-                    </Step>
-                ))}
-            </Step.Group>
+          <Step.Group widths={steps.length}>
+            {steps.map(step => (
+              <Step key={step.name}
+                active={step.name === data.step}>
+                  <Icon name={step.icon}></Icon>
+                  <Step.Content>
+                    <Step.Title>{step.title}</Step.Title>
+                    <Step.Description>{step.description}</Step.Description>
+                  </Step.Content>
+              </Step>
+            ))}
+          </Step.Group>
 
-            {data.activeStep === 'pool' && <CreateScrimPool members={data.pool} teamSize={data.teamSize} onChange={updatePoolData} />}
-            {data.activeStep === 'select-captains' && <CreateScrimSelectCaptains members={data.pool} onChange={updateSelectCaptains} />}
-            {data.activeStep === 'coinflip' && <CreateScrimCoinflip members={data.pool} onChange={updateCoinflip} />}
-			{data.activeStep === 'draft' && <CreateScrimDraft members={data.pool} draftFirst={data.draftFirst} />}
-			{data.activeStep === 'play' && <CreateScrimPlay {...data} />}
+          {data.step === 'pool' &&
+            <CreateScrimPool
+              members={data.pool}
+              scrimId={data.id}
+              teamSize={data.teamSize}
+              autoDraft={data.autoDraft}
+              autoBalance={data.autoBalance}
+              onError={handleError}
+              onChange={updatePoolData} />}
+          {data.step === 'select-captains' &&
+            <CreateScrimSelectCaptains
+              members={data.pool}
+              onChange={updateSelectCaptains} />}
+          {data.step === 'coinflip' &&
+            <CreateScrimCoinflip
+              members={data.pool}
+              onChange={updateCoinflip} />}
+          {data.step === 'draft' &&
+            <CreateScrimDraft
+              members={data.pool}
+              draftFirst={data.draftFirst}
+              sideFirst={data.sideFirst}
+              onChange={updateDraft} />}
+          {data.step === 'play' &&
+            <CreateScrimPlay
+              {...data} />}
 
-            <Menu fixed='bottom' inverted>
-                <Menu.Item position='left'>
-                    <Button color='red' onClick={handleBack} disabled={data.activeStepOrder === 1}>Back</Button>
-                </Menu.Item>
-                <Menu.Item position='right'>
-                    <Button primary onClick={handleContinue} disabled={!canContinue}>Continue</Button>
-                </Menu.Item>
-            </Menu>
+          <Menu fixed='bottom' inverted>
+            <Menu.Item position='left'>
+              <Button color='red' onClick={handleBack} disabled={data.step === 'pool'}>Back</Button>
+            </Menu.Item>
+            <Menu.Item position='right'>
+              <Button primary onClick={handleContinue} disabled={!canContinue}>Continue</Button>
+            </Menu.Item>
+          </Menu>
         </div>
-    )
+      }
+    </div>
+  )
 }
 
 export default CreateScrim;

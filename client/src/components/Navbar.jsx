@@ -1,10 +1,11 @@
 import { createMedia } from '@artsy/fresnel'
 import PropTypes from 'prop-types'
-import React, { Component } from 'react'
-import { Link } from 'react-router-dom'
+import React, { Component, useState } from 'react'
+import { useLocation, Link } from 'react-router-dom'
 import {
   Button,
   Container,
+  Dropdown,
   Grid,
   Header,
   Icon,
@@ -14,6 +15,7 @@ import {
   Sidebar,
   Visibility,
 } from 'semantic-ui-react'
+import useAuth from '../contexts/Auth';
 
 const { MediaContextProvider, Media } = createMedia({
   breakpoints: {
@@ -23,64 +25,67 @@ const { MediaContextProvider, Media } = createMedia({
   },
 })
 
-class DesktopContainer extends Component {
-  state = {}
+const DesktopContainer = (props) => {
+  const [fixed, setShowFixedMenu] = useState(false);
+  const location = useLocation();
 
-  hideFixedMenu = () => this.setState({ fixed: false })
-  showFixedMenu = () => this.setState({ fixed: true })
-
-  render() {
-    const { children } = this.props
-    const { fixed } = this.state
-
-    return (
-      <Media greaterThan='mobile'>
-        <Visibility
-          once={false}
-          onBottomPassed={this.showFixedMenu}
-          onBottomPassedReverse={this.hideFixedMenu}
+  return (
+    <Media greaterThan='mobile' secondary>
+      <Visibility
+        once={false}
+        onBottomPassed={() => setShowFixedMenu(false)}
+        onBottomPassedReverse={() => setShowFixedMenu(true)}
+      >
+        <Segment
+          inverted
+          textAlign='center'
+          style={{ minHeight: 75, padding: '1em 0em' }}
+          vertical
         >
-          <Segment
-            inverted
-            textAlign='center'
-            style={{ minHeight: 75, padding: '1em 0em' }}
-            vertical
+          <Menu
+            fixed={fixed ? 'top' : null}
+            inverted={!fixed}
+            pointing={!fixed}
+            secondary={!fixed}
+            size='large'
           >
-            <Menu
-              fixed={fixed ? 'top' : null}
-              inverted={!fixed}
-              pointing={!fixed}
-              secondary={!fixed}
-              size='large'
-            >
-              <Container>
-                <Menu.Item active>
-                  <Link to='/'>Home</Link>
-                </Menu.Item>
-                <Menu.Item><Link to='/my-teams'>My Teams</Link></Menu.Item>
-                <Menu.Item><Link to='/my-scrims'>My Scrims</Link></Menu.Item>
-                <Menu.Item><Link to='/find-scrim'>Find a Scrim</Link></Menu.Item>
-                <Menu.Item position='right'>
-                  <Button as='a' inverted={!fixed}>
-                    Log in
-                  </Button>
-                  <Button as='a' inverted={!fixed} primary={fixed} style={{ marginLeft: '0.5em' }}>
-                    Sign Up
-                  </Button>
-                </Menu.Item>
-              </Container>
-            </Menu>
-          </Segment>
-        </Visibility>
+            <Container>
+              <Menu.Item active={location.pathname === '/'} as={Link} to='/'>Home</Menu.Item>
+              <Menu.Item active={/\/create-scrim(\/\w)?/.test(location.pathname)} as={Link} to='/create-scrim'>Create Scrim</Menu.Item>
+              <Menu.Item position='right'>
+                {props.user &&
+                  <Dropdown item text={props.user.name}>
+                    <Dropdown.Menu>
+                      <Dropdown.Item as={Link} to='/profile' text='Profile' />
+                      <Dropdown.Item as={Link} to='/logout' text='Logout' />
+                    </Dropdown.Menu>
+                  </Dropdown>
+                }
 
-        {children}
-      </Media>
-    )
-  }
+                {!props.user &&
+                  <>
+                    <Button as={Link} inverted={!fixed} to='/login'>
+                      Log in
+                    </Button>
+                    <Button as={Link} inverted={!fixed} primary={fixed} style={{ marginLeft: '0.5em' }} to='/register'>
+                      Sign Up
+                    </Button>
+                  </>
+                }
+              </Menu.Item>
+            </Container>
+          </Menu>
+        </Segment>
+      </Visibility>
+
+      {props.children}
+    </Media>
+  )
 }
 
 DesktopContainer.propTypes = {
   children: PropTypes.node,
+  user: PropTypes.object,
 }
 
 class MobileContainer extends Component {
@@ -150,24 +155,28 @@ MobileContainer.propTypes = {
   children: PropTypes.node,
 }
 
-const ResponsiveContainer = ({ children }) => (
+const ResponsiveContainer = ({ children, user }) => (
   /* Heads up!
    * For large applications it may not be best option to put all page into these containers at
    * they will be rendered twice for SSR.
    */
   <MediaContextProvider>
-    <DesktopContainer>{children}</DesktopContainer>
-    <MobileContainer>{children}</MobileContainer>
+    <DesktopContainer user={user}>{children}</DesktopContainer>
+    <MobileContainer user={user}>{children}</MobileContainer>
   </MediaContextProvider>
 )
 
 ResponsiveContainer.propTypes = {
+  user: PropTypes.object,
   children: PropTypes.node,
 }
 
-const NavBar = (props) => (
-  <ResponsiveContainer {...props}>
-  </ResponsiveContainer>
-)
+const NavBar = (props) => {
+  const auth = useAuth();
+  return (
+    <ResponsiveContainer {...props} user={auth.value.user}>
+    </ResponsiveContainer>
+  )
+}
 
 export default NavBar;

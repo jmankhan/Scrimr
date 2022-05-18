@@ -36,3 +36,14 @@
     transform: rotate(360deg);
   }
 }
+
+.notification-container {
+  top: 20px;
+  left: 50%;
+  margin-left: -160px;
+}
+
+.notification-enter {
+  visibility: hidden;
+  transform: translate3d(0, -100%, 0);
+}

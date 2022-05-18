@@ -1,14 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { Grid, Header, Icon, List, Loader, Rail, Segment } from 'semantic-ui-react';
 import PropTypes from 'prop-types';
-import api from '../api';
 
 const Team = (props) => {
     const [data, setData] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
-        setData(api.getTeam(props.id));
+        // setData(api.getTeam(props.id));
         setIsLoading(false);
     }, [props.id]);
 
@@ -39,7 +38,7 @@ const Team = (props) => {
                                             </Segment>
                                         </List.Item>)
                                 })}
-                            </List>                            
+                            </List>
                     </Grid.Column>
                 </Grid>
             }

@@ -1,0 +1,368 @@
+openapi: 3.0.0
+info:
+  title: Scrimr API
+  description: Esports platform API
+  version: 0.0.1
+servers:
+  - url: http://localhost:3001/api
+    description: Dev server
+components:
+  schemas:
+    Summoner:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Riot encrypted summoner id
+          example: K0vVS-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+        name:
+          type: string
+          description: Summoner name, or in game name
+          example: DaTissueBox
+        rank:
+          type: integer
+          description: numeral representing tier and division
+          example: 0 = Iron IV, 1 =  Iron III, 12 = Gold IV
+        level:
+          type: integer
+          description: Summoner level
+          example: 100
+        icon:
+          type: integer
+          description: Riot id of profile icon
+          example: 1200
+        members:
+          type: array
+          description: Related members. This will grow over time as user joins many teams. n-1.
+          items:
+            $ref: '#/components/schemas/Member'
+        user:
+          $ref: '#/components/schemas/User'
+    Member:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Record id
+        createdDate:
+          type: DateTime
+          description: Timestamp of when member was created
+        summoner:
+          $ref: '#/components/schemas/Summoner'
+          description: Lookup to related Summoner. n-1
+        team:
+          $ref: '#/components/schemas/Team'
+          description: Lookup to related team. n-1
+    Team:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Record id
+        name:
+          type: string
+          description: Name of team
+        isPrivate:
+          type: boolean
+          description: Public or private
+    Scrim:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Record id
+        createdDate:
+          type: DateTime
+          description: Timestamp of when scrim was created
+        teams:
+          type: array
+          description: Teams taking part in this scrim, usually 2, but may be more
+          items:
+            $ref: '#/components/schemas/Team'
+        host:
+          $ref: '#/components/schemas/User'
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Record Id
+        name:
+          type: string
+          description: May match summoner name, but is not guaranteed. May be unset.
+        email:
+          type: string
+          description: Registration email
+        summoner:
+          $ref: '#/components/schemas/Summoner'
+          description: Linked summoner. May be unset
+tags:
+- name: "Summoner"
+  description: Scrimr summoners that have been sync'd from Riot API
+- name: "Member"
+  description: Players that have joined a particular team and also represent a summoner
+- name: "Team"
+  description: A private or public team of players
+- name: "Scrim"
+  description: A virtual event that occurs at a particular time and includes at least 2 teams
+
+paths:
+  /summoner:
+    get:
+      tags:
+      - "Summoner"
+      summary: Retrieve all summoners
+      description: Returns all summoners that have been requested to be imported.
+      responses:
+        '200':
+          description: A JSON array of summoner objects
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Summoner'
+    post:
+      tags:
+      - "Summoner"
+      summary: Creates a new summoner record
+      description: Makes a request to Riot API to get summoner data
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Summoner'
+      responses:
+          '200':
+            description: Successfully found a summoner and created a record
+            content:
+              application/json:
+                schema:
+                  id:
+                    type: string
+                    description: Record id, which matches the encryptedSummonerId from Riot API
+          '404':
+              description: Summoner not found
+          '409':
+              description: Summoner already exists
+  /summoner/{id}:
+    get:
+      tags:
+      - "Summoner"
+      summary: Retrieve a particular Summoner by id
+      description: Locate a summoner by record id, which matches the encryptedSummonerId on the Riot API
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+          required: true
+          description: Record id of the summoner to get
+      response:
+        '200':
+          description: Return summoner
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Summoner'
+        '404':
+          description: No Summoner with this id
+
+  /summoner/{id}/link:
+    post:
+      tags:
+      - "Summoner"
+      summary: Link a summoner record to a team member
+      description: Indicate that a team member is a particular summoner (aka player) in Riot AP
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+          required: true
+          description: Record id of the summoner to get
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              memberId:
+                type: integer
+              summonerId:
+                type: string
+      response:
+        '200':
+          description: Successfully linked a summoner to a particular member
+        '404':
+          description: The member or summoner was not found. You may need to create the summoner record first.
+
+  /summoner/{id}/sync:
+    post:
+      tags:
+      - "Summoner"
+      summary: Update a summoner record
+      description: Sync the summoner record with the Riot API and stores the latest data
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+          required: true
+          description: Record id of the summoner to get
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              summonerId:
+                type: string
+                description: Record id
+      responses:
+        '200':
+          description: Successfully sync'd the summoner with Riot API
+        '500':
+          description: An internal server issue ocurred, possibly hit the rate limit or other issue with the Riot API
+
+  /member:
+    get:
+      tags:
+      - "Member"
+      summary: Retrieves all members
+      description: Returns all members that have been created
+      responses:
+        '200':
+          description: A JSON object array of members
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Member'
+    post:
+      tags:
+      - "Member"
+      summary: Create a new member
+      description: Creates a new Member record
+      requestBody:
+        required: true
+        content:
+          applicatio/json:
+            schema:
+              $ref: '#/components/schemas/Member'
+      responses:
+        '200':
+          description: Successfully created a member
+          content:
+            application/json:
+              schema:
+                id:
+                  type: string
+                  description: the newly generated record id
+
+  /member/{id}:
+    get:
+      tags:
+      - "Member"
+      summary: Retrieve a particular Member by id
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+          description: Numeric ID of the member to get
+      responses:
+        '200':
+          description: Return member
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Member'
+        '404':
+          description: No Member with this id
+    put:
+      tags:
+      - "Member"
+      summary: Update a member record
+      description: Updates any fields on a member, except the id
+      responses:
+        '200':
+          description: Success
+        '404':
+          description: No Member with this id
+    delete:
+      tags:
+      - "Member"
+      summary: Delete a member
+      description: Updates any fields on a member, except the id
+      responses:
+        '200':
+          description: Success
+        '404':
+          description: No Member with this id
+
+  /scrim:
+    get:
+      tags:
+      -  "Scrim"
+      summary: Retrieve all scrims
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Scrim'
+    /post:
+      tags:
+      - "Scrim"
+      summary: Insert a new scrim
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Scrim'
+      responses:
+        '200': Success
+        '500': An error occurred posting a new scrim
+  /scrim/{id}:
+    get:
+      tags:
+      - "Scrim"
+      summary: Retrieve a particular scrim by record id
+      description: Retrieves a scrim, including teams, createddate and host
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+          description: Numeric ID of the scrim to get
+      responses:
+        '200':
+          description: A Scrim record
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Scrim'
+    patch:
+      tags:
+      - "Scrim"
+      summary: Update scrim fields
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Scrim'
+    delete:
+      tags:
+      - "Scrim"
+      summary: Deletes the scrim record
+      description: Only the host may delete the scrim
+      responses:
+        '200':
+          description: 'Success'
+        '500':
+          description: 'An error occurred deleting the scrim'

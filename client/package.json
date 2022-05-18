@@ -7,8 +7,13 @@
     "@testing-library/jest-dom": "^5.14.1",
     "@testing-library/react": "^13.0.0",
     "@testing-library/user-event": "^13.2.1",
+    "axios": "^0.27.2",
     "react": "^18.0.0",
+    "react-dnd": "^16.0.1",
+    "react-dnd-html5-backend": "^16.0.1",
     "react-dom": "^18.0.0",
+    "react-hotkeys-hook": "^3.4.6",
+    "react-notifications": "^1.7.3",
     "react-router-dom": "6",
     "react-scripts": "5.0.1",
     "semantic-ui-css": "^2.4.1",
@@ -38,5 +43,6 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
-  }
+  },
+  "proxy": "http://localhost:3001"
 }

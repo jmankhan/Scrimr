@@ -34,18 +34,22 @@ const CreateScrimPlay = (props) => {
   return (
     <Container>
       <Grid centered columns={props.pool.length / props.teamSize}>
-        {teams.map(team => (
-          <Grid.Column key={team.id}>
-            <SegmentGroup>
-              <Segment>
-                <Header>{team.name}</Header>
-              </Segment>
-              {team.members.map(member => (
-                <Member key={member.id} {...member} />
-              ))}
-            </SegmentGroup>
-          </Grid.Column>
-        ))}
+        <Grid.Row>
+          {teams.map(team => (
+            <Grid.Column key={team.id}>
+              <SegmentGroup>
+                <Segment>
+                  <Header style={{ textAlign: 'center' }}>{team.name}</Header>
+                </Segment>
+                {team.members.map(member => (
+                  <Member key={member.id} {...member} />
+                ))}
+              </SegmentGroup>
+            </Grid.Column>
+          ))}
+        </Grid.Row>
+        <Grid.Row>
+        </Grid.Row>
       </Grid>
     </Container>
   )
