@@ -49,6 +49,7 @@ const CreateScrimPlay = (props) => {
           ))}
         </Grid.Row>
         <Grid.Row>
+          <Header>{props.members.find(member => member.id === props.draftFirst).summoner.name + ' will draft first.'}</Header>
         </Grid.Row>
       </Grid>
     </Container>

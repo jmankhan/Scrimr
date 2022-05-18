@@ -49,12 +49,16 @@ router.post('/', requireAuth, [
   });
 
   if(!summoner) {
-    const summonerResponse = await SummonerService.getSummonerByName(safeSummonerId).catch(next);
-    summoner = await prisma.summoner.create({
-      data: {
-        ...summonerResponse
-      }
-    }).catch(next)
+    try {
+      const summonerResponse = await SummonerService.getSummonerByName(safeSummonerId);
+      summoner = await prisma.summoner.create({
+        data: {
+          ...summonerResponse
+        }
+      })
+    } catch(err) {
+      return next(err);
+    }
   }
 
   const memberExists = await prisma.member.findFirst({

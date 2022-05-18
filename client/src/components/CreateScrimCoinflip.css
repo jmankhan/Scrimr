@@ -45,13 +45,13 @@
   -webkit-transform: rotateY(-180deg);
 }
 
-#coin.heads {
+#coin.tails {
   -webkit-animation: flipHeads 2s ease-out forwards;
   -moz-animation: flipHeads 2s ease-out forwards;
   -o-animation: flipHeads 2s ease-out forwards;
   animation: flipHeads 2s ease-out forwards;
 }
-#coin.tails {
+#coin.heads {
   -webkit-animation: flipTails 2s ease-out forwards;
   -moz-animation: flipTails 2s ease-out forwards;
   -o-animation: flipTails 2s ease-out forwards;
@@ -81,4 +81,9 @@
     -moz-transform: rotateY(720deg);
     transform: rotateY(720deg);
   }
+}
+
+.dropdownLabel {
+  display: inline;
+  padding-right: 1em;
 }

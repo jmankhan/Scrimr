@@ -91,6 +91,7 @@ const CreateScrim = () => {
         ...data,
         step: steps[stepIndex-1].name,
       });
+      setCanContinue(true);
     }
   }
 
@@ -181,6 +182,10 @@ const CreateScrim = () => {
           {data.step === 'coinflip' &&
             <CreateScrimCoinflip
               members={data.pool}
+              coinflipWinner={data.coinflipWinner}
+              sideFirst={data.sideFirst}
+              draftPick={data.draftPick}
+              sideSelection={data.sideSelection}
               onChange={updateCoinflip} />}
           {data.step === 'draft' &&
             <CreateScrimDraft
@@ -190,7 +195,9 @@ const CreateScrim = () => {
               onChange={updateDraft} />}
           {data.step === 'play' &&
             <CreateScrimPlay
-              {...data} />}
+              members={data.pool}
+              draftFirst={data.draftFirst}
+              sideFirst={data.sideFirst} />}
 
           <Menu fixed='bottom' inverted>
             <Menu.Item position='left'>
