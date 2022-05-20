@@ -51,7 +51,7 @@ const DesktopContainer = (props) => {
           >
             <Container>
               <Menu.Item active={location.pathname === '/'} as={Link} to='/'>Home</Menu.Item>
-              <Menu.Item active={/\/create-scrim(\/\w)?/.test(location.pathname)} as={Link} to='/create-scrim'>Create Scrim</Menu.Item>
+              <Menu.Item active={/\/in-house(\/\w)?/.test(location.pathname)} as={Link} to='/in-house'>In House</Menu.Item>
               <Menu.Item position='right'>
                 {props.user &&
                   <Dropdown item text={props.user.name}>

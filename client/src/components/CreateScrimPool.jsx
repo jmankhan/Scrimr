@@ -5,8 +5,8 @@ import Member from './Member';
 import API from '../api';
 import './CreateScrimPool.css';
 
-const searchResultRenderer = ({ id, name, isActive }) => {
-	return (<p id={id} title={name}>{name} {isActive && <kbd style={{float: 'right'}}>Enter</kbd>}</p>);
+const searchResultRenderer = ({ id, name }) => {
+	return (<p id={id} title={name}>{name} <kbd style={{float: 'right', display: 'none'}}>Enter</kbd></p>);
 }
 
 const CreateScrimPool = (props) => {
@@ -46,7 +46,7 @@ const CreateScrimPool = (props) => {
 		if(value) {
 			setIsSearchLoading(true);
 			const results = await API.search(value);
-			setSearchResults(results.map((r, index) => ({ id: r.id, title: r.name, name: r.name, isActive: index === 0 })));
+			setSearchResults(results.map((r, index) => ({ id: r.id, title: r.name, name: r.name })));
 			setIsSearchLoading(false);
 		}
 		setSearchValue(value);
@@ -145,13 +145,6 @@ const CreateScrimPool = (props) => {
 		props.onChange(newData);
 	}
 
-  const handleSearchSelection = (e, eventData) => {
-    const activeResultIndex = searchResults.findIndex(result => result.id === eventData.value);
-    const newSearchResults = [...searchResults];
-    newSearchResults[activeResultIndex].isActive = true;
-    setSearchResults(newSearchResults);
-  }
-
 	return (
 		<Container>
 
@@ -169,7 +162,7 @@ const CreateScrimPool = (props) => {
               <Search
                 icon={
                     <Icon name='search'>
-                      <kbd class='searchHint'>Cmd + K</kbd>
+                      <kbd class='searchHint'>Cmd+K</kbd>
                     </Icon>
                 }
                 input={{fluid: true, ref: searchRef}}
@@ -177,11 +170,9 @@ const CreateScrimPool = (props) => {
                 minCharacters={3}
                 placeholder='Add Member'
                 results={searchResults}
-                selectFirstResult
                 value={searchValue}
                 resultRenderer={searchResultRenderer}
                 onSearchChange={handleSearch}
-                onSelectionChange={handleSearchSelection}
                 onResultSelect={addMember} />
             </Form>
 					</Grid.Column>

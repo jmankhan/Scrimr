@@ -2,7 +2,7 @@
   position: absolute;
   top: 8px;
   bottom: 8px;
-  right: 2.6em;
+  right: 3em;
 }
 
 kbd {
@@ -17,4 +17,9 @@ kbd {
   line-height: 1;
   padding: 2px 4px;
   white-space: nowrap;
+  background-color: yellow;
+}
+
+.active > p > kbd {
+  display: inline-block !important;
 }

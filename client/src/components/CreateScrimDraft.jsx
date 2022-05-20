@@ -65,7 +65,7 @@ const CreateScrimDraft = (props) => {
 						<Grid.Column key={team.id}>
 							<SegmentGroup>
 								<Segment inverted={captains[turn].id === team.members[0].id}>
-									<Header>{team.name}</Header>
+									<Header style={{ textAlign: 'center' }}>{team.name}</Header>
 								</Segment>
 								{team.members.map(member => (
 									<Member key={member.id} {...member} />
@@ -81,11 +81,11 @@ const CreateScrimDraft = (props) => {
 				</Grid.Row>
 			</Grid>
 
-      <Header>{`${captains[turn].summoner.name}'s Turn`}</Header>
-      <Button icon='undo' content='Undo' disabled={sequence.length <= 0} onClick={handleUndo} />
+      {getUnassignedMembers().length > 0 && <Header>{`${captains[turn].summoner.name}'s Turn`}</Header>}
+      <Button icon='undo' content='Undo' style={{ marginTop: '1em' }} disabled={sequence.length <= 0} onClick={handleUndo} />
 			<Divider section />
 
-			<Grid centered columns={3}>
+			<Grid columns={3}>
 				{getUnassignedMembers().map(member => (
 					<Grid.Column key={member.id}>
 						<Member {...member} canAdd onAdd={addMember} />

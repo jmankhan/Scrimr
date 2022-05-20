@@ -24,12 +24,10 @@ const Home = ({ mobile }) => (
         marginTop: mobile ? '0.5em' : '1.5em',
       }}
     />
-    <Link to='/find-scrim'>
         <Button primary size='huge'>
-            Find a Scrim
+            Coming Soon
             <Icon name='right arrow' />
         </Button>
-    </Link>
   </Container>
 )
 

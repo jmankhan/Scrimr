@@ -196,8 +196,7 @@ const CreateScrim = () => {
           {data.step === 'play' &&
             <CreateScrimPlay
               members={data.pool}
-              draftFirst={data.draftFirst}
-              sideFirst={data.sideFirst} />}
+              {...data} />}
 
           <Menu fixed='bottom' inverted>
             <Menu.Item position='left'>

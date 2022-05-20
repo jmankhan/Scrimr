@@ -101,8 +101,8 @@ const CreateScrimCoinflip = (props) => {
         <Grid.Row>
           <Grid.Column>
             <div id='coin' className={getCoinClass()}>
-              <div class='side-a'>Heads</div>
-              <div class='side-b'>Tails</div>
+              <div class='side-a'><p>Heads</p></div>
+              <div class='side-b'><p>Tails</p></div>
             </div>
           </Grid.Column>
         </Grid.Row>

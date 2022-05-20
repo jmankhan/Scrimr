@@ -38,6 +38,9 @@
   position: absolute;
   -webkit-backface-visibility: hidden;
 }
+#coin div p {
+  padding-top: 36px;
+}
 .side-a {
   z-index: 100;
 }
@@ -85,5 +88,5 @@
 
 .dropdownLabel {
   display: inline;
-  padding-right: 1em;
+  padding-right: 1em !important;
 }

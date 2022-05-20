@@ -9,6 +9,7 @@ import Team from './components/Team';
 import LoginForm from './components/LoginForm';
 import RegistrationForm from './components/RegistrationForm';
 import Logout from './components/Logout';
+import InHouseLanding from './components/InHouseLanding';
 
 function App() {
   return (
@@ -21,9 +22,11 @@ function App() {
                 <Route path='/login' element={<LoginForm />}></Route>
                 <Route path='/register' element={<RegistrationForm />}></Route>
                 <Route path='/logout' element={<PrivateRoute redirectTo='/'><Logout /></PrivateRoute>} />
+
                 {/* <Route path='/my-teams' element={<PrivateRoute><Team /></PrivateRoute>} /> */}
-                <Route path='/create-scrim' element={<PrivateRoute><CreateScrim /></PrivateRoute>} />
-                <Route path='/create-scrim/:id' element={<PrivateRoute><CreateScrim /></PrivateRoute>} />
+                <Route path='/in-house' element={<InHouseLanding />} />
+                <Route path='/in-house/create-scrim' element={<PrivateRoute><CreateScrim /></PrivateRoute>} />
+                <Route path='/in-house/create-scrim/:id' element={<PrivateRoute><CreateScrim /></PrivateRoute>} />
             </Routes>
         </NavBar>
       </AuthProvider>
