@@ -5,7 +5,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import API from '../api';
 import CreateScrimPool from './CreateScrimPool';
 import CreateScrimSelectCaptains from './CreateScrimSelectCaptains';
-import CreateScrimCoinflip from './CreateScrimCoinflip';
+import CreateScrimPrizeWheel from './CreateScrimPrizeWheel';
 import CreateScrimDraft from './CreateScrimDraft';
 import CreateScrimPlay from './CreateScrimPlay';
 
@@ -18,7 +18,7 @@ const steps = [
     icon: 'star outline',
     order: 2,
   },
-  { name: 'coinflip', title: 'Coin Flip', description: 'Pray to the RNG gods', icon: 'dollar', order: 3 },
+  { name: 'prize-wheel', title: 'Prize Wheel', description: 'Pray to the RNG gods', icon: 'compass outline', order: 3 },
   { name: 'draft', title: 'Draft', description: 'Cull the weak', icon: 'user outline', order: 4 },
   { name: 'play', title: 'Play', description: 'Start playing!', icon: 'gamepad', order: 5 },
 ];
@@ -123,10 +123,9 @@ const CreateScrim = () => {
     setCanContinue(members.filter((member) => member.isCaptain).length >= 2);
   };
 
-  const updateCoinflip = ({ coinflipWinner, draftFirst, sideFirst }) => {
+  const updatePrizewheel = ({ draftFirst, sideFirst }) => {
     const newData = {
       ...data,
-      coinflipWinner,
       draftFirst,
       sideFirst,
     };
@@ -180,14 +179,13 @@ const CreateScrim = () => {
           {data.step === 'select-captains' && (
             <CreateScrimSelectCaptains members={data.pool} onChange={updateSelectCaptains} />
           )}
-          {data.step === 'coinflip' && (
-            <CreateScrimCoinflip
+          {data.step === 'prize-wheel' && (
+            <CreateScrimPrizeWheel
               members={data.pool}
               coinflipWinner={data.coinflipWinner}
               sideFirst={data.sideFirst}
               draftPick={data.draftPick}
-              sideSelection={data.sideSelection}
-              onChange={updateCoinflip}
+              onChange={updatePrizewheel}
             />
           )}
           {data.step === 'draft' && (

@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
-import { Button, Container, Grid, Header, List } from "semantic-ui-react";
+import { Button, Container, Grid, Header, Input, List } from "semantic-ui-react";
 import Member from "./Member";
 
 const CreateScrimSelectCaptains = (props) => {
     const [members, setMembers] = useState([]);
     const [selectedMember, setSelectedMember] = useState(false);
+    const [randomizedAmount, setRandomizedAmount] = useState(2);
 
     useEffect(() => {
         setMembers(props.members);
@@ -21,6 +22,10 @@ const CreateScrimSelectCaptains = (props) => {
         props.onChange([...members]);
     };
 
+    const handleRandomizeAmount = (e, eventData) => {
+      setRandomizedAmount(eventData.value);
+    }
+
     const selectMember = (id) => {
         setMembers(members.map((m) => ({ ...m, isSelected: m.id === id })));
         setSelectedMember(true);
@@ -28,7 +33,7 @@ const CreateScrimSelectCaptains = (props) => {
 
     const handleRandomize = () => {
         const randomizedList = [...members].sort(() => 0.5 - Math.random());
-        const captains = new Set([randomizedList[0].id, randomizedList[1].id]);
+        const captains = new Set(randomizedList.slice(0, randomizedAmount).map(captain => captain.id));
         const newMembers = members.map((member) => ({
             ...member,
             isCaptain: captains.has(member.id),
@@ -42,11 +47,19 @@ const CreateScrimSelectCaptains = (props) => {
             <Grid columns={3} centered>
                 <Grid.Row>
                     <Grid.Column textAlign="center">
-                        <Button
+                      <Input
+                        label={
+                          <Button
                             icon="random"
                             content="Randomize"
-                            onClick={handleRandomize}
-                        />
+                            onClick={handleRandomize} />
+                        }
+                        labelPosition='left'
+                        type='number'
+                        defaultValue={randomizedAmount}
+                        min='2'
+                        max={Math.min(10, props.members.length)}
+                        onChange={handleRandomizeAmount} />
                     </Grid.Column>
                 </Grid.Row>
                 <Grid.Column>
