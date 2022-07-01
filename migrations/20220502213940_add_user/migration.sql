@@ -9,13 +9,13 @@
 */
 -- CreateTable
 CREATE TABLE "Team" (
-    "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    "id" INTEGER NOT NULL PRIMARY KEY generated always,
     "name" TEXT
 );
 
 -- CreateTable
 CREATE TABLE "User" (
-    "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    "id" INTEGER NOT NULL PRIMARY KEY generated always,
     "email" TEXT NOT NULL,
     "password" TEXT,
     "name" TEXT
@@ -24,7 +24,7 @@ CREATE TABLE "User" (
 -- RedefineTables
 PRAGMA foreign_keys=OFF;
 CREATE TABLE "new_Member" (
-    "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    "id" INTEGER NOT NULL PRIMARY KEY generated always,
     "name" TEXT NOT NULL,
     "rank" INTEGER,
     "roles" TEXT NOT NULL,

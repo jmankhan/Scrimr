@@ -4,29 +4,28 @@ import twisted from 'twisted';
 
 const prisma = new p.PrismaClient();
 const router = express.Router();
-const riotApi = new twisted.LolApi();
 
 router.get('/', async (req, res, next) => {
   const value = req.query.q;
   const records = await prisma.summoner.findMany({
     where: {
       name: {
-        contains: value.replace(/[\\$'"]/g, "\\$&")
-      }
-    }
+        contains: value.replace(/[\\$'"]/g, '\\$&'),
+      },
+    },
   });
 
   // allow exact matches to be selectable options
-  if(!records.find(r => r.name === value)) {
+  if (!records.find((r) => r.name === value)) {
     records.unshift({
       id: value,
-      name: value
+      name: value,
     });
   }
 
   res.json({
-    results: records
+    results: records,
   });
-})
+});
 
 export default router;

@@ -1,6 +1,6 @@
 -- CreateTable
 CREATE TABLE "Member" (
-    "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    "id" INTEGER NOT NULL PRIMARY KEY generated always,
     "username" TEXT NOT NULL,
     "rank" INTEGER NOT NULL,
     "roles" TEXT NOT NULL

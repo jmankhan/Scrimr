@@ -10,7 +10,7 @@
 */
 -- CreateTable
 CREATE TABLE "Summoner" (
-    "id" TEXT NOT NULL PRIMARY KEY,
+    "id" TEXT NOT NULL PRIMARY KEY generated always,
     "name" TEXT NOT NULL,
     "rank" INTEGER NOT NULL,
     "level" INTEGER NOT NULL,
@@ -23,7 +23,7 @@ CREATE TABLE "Summoner" (
 -- RedefineTables
 PRAGMA foreign_keys=OFF;
 CREATE TABLE "new_Member" (
-    "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    "id" INTEGER NOT NULL PRIMARY KEY generated always,
     "createdDate" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "teamId" INTEGER NOT NULL,
     "summonerId" TEXT NOT NULL,

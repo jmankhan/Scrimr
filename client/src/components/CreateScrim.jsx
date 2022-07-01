@@ -1,26 +1,50 @@
-import React, { useEffect, useState } from 'react';
-import { Button, Icon, Loader, Menu, Step } from 'semantic-ui-react';
-import { NotificationManager } from 'react-notifications';
-import { useParams, useNavigate } from 'react-router-dom';
-import API from '../api';
-import CreateScrimPool from './CreateScrimPool';
-import CreateScrimSelectCaptains from './CreateScrimSelectCaptains';
-import CreateScrimPrizeWheel from './CreateScrimPrizeWheel';
-import CreateScrimDraft from './CreateScrimDraft';
-import CreateScrimPlay from './CreateScrimPlay';
+import React, { useEffect, useState } from "react";
+import { Button, Icon, Loader, Menu, Step } from "semantic-ui-react";
+import { NotificationManager } from "react-notifications";
+import { useParams, useNavigate } from "react-router-dom";
+import API from "../api";
+import CreateScrimPool from "./CreateScrimPool";
+import CreateScrimSelectCaptains from "./CreateScrimSelectCaptains";
+import CreateScrimPrizeWheel from "./CreateScrimPrizeWheel";
+import CreateScrimDraft from "./CreateScrimDraft";
+import CreateScrimPlay from "./CreateScrimPlay";
 
 const steps = [
-  { name: 'pool', title: 'Pool', description: 'Add candidate players', icon: 'list ul', order: 1 },
   {
-    name: 'select-captains',
-    title: 'Select Captains',
-    description: 'Choose who leads',
-    icon: 'star outline',
+    name: "pool",
+    title: "Pool",
+    description: "Add candidate players",
+    icon: "list ul",
+    order: 1,
+  },
+  {
+    name: "select-captains",
+    title: "Select Captains",
+    description: "Choose who leads",
+    icon: "star outline",
     order: 2,
   },
-  { name: 'prize-wheel', title: 'Prize Wheel', description: 'Pray to the RNG gods', icon: 'compass outline', order: 3 },
-  { name: 'draft', title: 'Draft', description: 'Cull the weak', icon: 'user outline', order: 4 },
-  { name: 'play', title: 'Play', description: 'Start playing!', icon: 'gamepad', order: 5 },
+  {
+    name: "prize-wheel",
+    title: "Prize Wheel",
+    description: "Pray to the RNG gods",
+    icon: "compass outline",
+    order: 3,
+  },
+  {
+    name: "draft",
+    title: "Draft",
+    description: "Cull the weak",
+    icon: "user outline",
+    order: 4,
+  },
+  {
+    name: "play",
+    title: "Play",
+    description: "Start playing!",
+    icon: "gamepad",
+    order: 5,
+  },
 ];
 
 const CreateScrim = () => {
@@ -31,22 +55,27 @@ const CreateScrim = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const createScrim = async (redirect) => {
+    const createScrim = async () => {
       setLoading(true);
       const scrim = await API.createScrim();
       setData(scrim);
+      navigate("" + scrim.id);
+    };
 
-      if (redirect) {
-        navigate('' + scrim.id);
-      }
+    const getScrim = async (id) => {
+      setLoading(true);
+      const scrim = await API.getScrim(id);
+      setData(scrim);
     };
 
     try {
-      if (!data && !loading) {
-        createScrim(!id);
+      if (!id) {
+        createScrim();
+      } else if (id) {
+        getScrim(id);
       }
     } catch (err) {
-      NotificationManager.error('Error', err.response.data.error, 5000);
+      NotificationManager.error("Error", err.response.data.error, 5000);
     } finally {
       setLoading(false);
     }
@@ -57,7 +86,7 @@ const CreateScrim = () => {
     let step;
 
     if (stepIndex === 0 && data.autoDraft) {
-      step = 'play';
+      step = "play";
     } else {
       step = steps[stepIndex + 1].name;
     }
@@ -66,7 +95,7 @@ const CreateScrim = () => {
       setLoading(true);
       await API.updateScrim({ ...data, step });
     } catch (err) {
-      NotificationManager.error('Error', err.response.data.error, 5000);
+      NotificationManager.error("Error", err.response.data.error, 5000);
     } finally {
       setLoading(false);
     }
@@ -80,14 +109,14 @@ const CreateScrim = () => {
   };
 
   const handleBack = async () => {
-    if (data.step !== 'pool') {
+    if (data.step !== "pool") {
       const stepIndex = steps.findIndex((step) => step.name === data.step);
 
       try {
         setLoading(true);
         await API.updateScrim({ ...data, step: steps[stepIndex - 1].name });
       } catch (err) {
-        NotificationManager.error('Error', err.response.data.error, 5000);
+        NotificationManager.error("Error", err.response.data.error, 5000);
       } finally {
         setLoading(false);
       }
@@ -113,21 +142,35 @@ const CreateScrim = () => {
     setCanContinue(members.length >= teamSize * 2);
   };
 
-  const updateSelectCaptains = (members) => {
+  const updateSelectCaptains = async (members) => {
     const newData = {
       ...data,
       pool: [...members],
     };
 
+    try {
+      await API.deleteTeamsForScrim(data.id);
+      const teams = members
+        .filter((m) => m.isCaptain)
+        .map((captain) => ({
+          name: `${captain.summoner.name}'s Team`,
+          members: [captain],
+          scrimId: data.id,
+        }));
+      const response = await API.createTeams(teams);
+      newData.teams = response.teams;
+    } catch (err) {
+      NotificationManager.error("Error", err.response.data.error, 5000);
+    }
+
     setData(newData);
     setCanContinue(members.filter((member) => member.isCaptain).length >= 2);
   };
 
-  const updatePrizewheel = ({ draftFirst, sideFirst }) => {
+  const updatePrizewheel = ({ draftOrder }) => {
     const newData = {
       ...data,
-      draftFirst,
-      sideFirst,
+      draftOrder,
     };
 
     setData(newData);
@@ -165,7 +208,7 @@ const CreateScrim = () => {
             ))}
           </Step.Group>
 
-          {data.step === 'pool' && (
+          {data.step === "pool" && (
             <CreateScrimPool
               members={data.pool}
               scrimId={data.id}
@@ -176,31 +219,39 @@ const CreateScrim = () => {
               onChange={updatePoolData}
             />
           )}
-          {data.step === 'select-captains' && (
-            <CreateScrimSelectCaptains members={data.pool} onChange={updateSelectCaptains} />
+          {data.step === "select-captains" && (
+            <CreateScrimSelectCaptains
+              members={data.pool}
+              onChange={updateSelectCaptains}
+            />
           )}
-          {data.step === 'prize-wheel' && (
+          {data.step === "prize-wheel" && (
             <CreateScrimPrizeWheel
               members={data.pool}
-              coinflipWinner={data.coinflipWinner}
-              sideFirst={data.sideFirst}
-              draftPick={data.draftPick}
+              draftOrder={data.draftOrder}
               onChange={updatePrizewheel}
             />
           )}
-          {data.step === 'draft' && (
+          {data.step === "draft" && (
             <CreateScrimDraft
               members={data.pool}
-              draftFirst={data.draftFirst}
-              sideFirst={data.sideFirst}
+              teamSize={data.teamSize}
+              teams={data.teams}
+              draftOrder={data.draftOrder}
               onChange={updateDraft}
             />
           )}
-          {data.step === 'play' && <CreateScrimPlay members={data.pool} {...data} />}
+          {data.step === "play" && (
+            <CreateScrimPlay members={data.pool} teams={data.teams} {...data} />
+          )}
 
           <Menu fixed="bottom" inverted>
             <Menu.Item position="left">
-              <Button color="red" onClick={handleBack} disabled={data.step === 'pool'}>
+              <Button
+                color="red"
+                onClick={handleBack}
+                disabled={data.step === "pool"}
+              >
                 Back
               </Button>
             </Menu.Item>

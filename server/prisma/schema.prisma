@@ -2,68 +2,69 @@
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
-  provider = "prisma-client-js"
+    provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = env("DATABASE_URL")
+    provider = "postgres"
+    url      = env("PG_URL")
 }
 
 model Member {
-  id Int @id @default(autoincrement())
-  createdDate DateTime @default(now())
-  team Team? @relation(fields: [teamId], references: [id])
-  teamId Int?
-  summoner Summoner? @relation(fields: [summonerId], references: [id])
-  summonerId String?
-  scrim Scrim? @relation(fields: [scrimId], references: [id])
-  scrimId Int?
+    id          Int       @id @default(autoincrement())
+    createdDate DateTime  @default(now())
+    team        Team?     @relation(fields: [teamId], references: [id])
+    teamId      Int?
+    summoner    Summoner? @relation(fields: [summonerId], references: [id])
+    summonerId  String?
+    scrim       Scrim?    @relation(fields: [scrimId], references: [id])
+    scrimId     Int?
 }
 
 model Team {
-  id Int @id @default(autoincrement())
-  name String?
-  members Member[]
-  scrim Scrim? @relation(fields: [scrimId], references: [id])
-  scrimId Int?
+    id      Int      @id @default(autoincrement())
+    name    String?
+    scrim   Scrim?   @relation(fields: [scrimId], references: [id])
+    scrimId Int?
+    members Member[]
 }
 
 model Summoner {
-  id String @id
-  name String
-  rank Int
-  level Int
-  icon Int
-  roles String?
-  members Member[]
-  user User? @relation(fields: [userId], references: [id])
-  userId Int? @unique
+    id        String   @id
+    name      String
+    rank      Int
+    level     Int
+    icon      Int
+    isClaimed Boolean  @default(false)
+    members   Member[]
+    user      User?    @relation(fields: [userId], references: [id])
+    userId    Int?     @unique
 }
 
 model Scrim {
-  id Int @id @default(autoincrement())
-  autoDraft Boolean @default(false)
-  autoBalance Boolean @default(false)
-  coinflipWinner Int?
-  createdDate DateTime @default(now())
-  firstDraftId Int?
-  host User @relation(fields: [hostId], references: [id])
-  hostId Int
-  isPrivate Boolean @default(true)
-  pool Member[]
-  sidePickId Int?
-  sideSelection Int?
-  step String @default("pool")
-  teams Team[]
-  teamSize Int @default(5)
+    id          Int      @id @default(autoincrement())
+    autoDraft   Boolean  @default(false)
+    autoBalance Boolean  @default(false)
+    createdDate DateTime @default(now())
+    draftOrder  Int[]
+    host        User     @relation(fields: [hostId], references: [id])
+    hostId      Int
+    isPrivate   Boolean  @default(true)
+    pool        Member[]
+    sideOrder   String?
+    step        String   @default("pool")
+    teams       Team[]
+    teamSize    Int      @default(5)
 }
 
 model User {
-  id Int @id @default(autoincrement())
-  email String @unique
-  password String?
-  name String?
-  summoner Summoner?
-  scrims Scrim[]
+    id            Int       @id @default(autoincrement())
+    email         String    @unique
+    password      String?
+    name          String?
+    summoner      Summoner?
+    scrims        Scrim[]
+    primaryRole   String?
+    secondaryRole String?
+    verified      Boolean   @default(false)
 }

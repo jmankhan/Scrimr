@@ -1,23 +1,22 @@
+import createHttpError from 'http-errors';
 import jwt from '../utils/jwt.js';
-import createError from 'http-errors';
 
-const auth = async (req, res, next) => {
-  console.log('authorizing for url ' + req.protocol + '://' + req.get('host') + req.originalUrl);
-  console.log('with token ' + req.headers.authorization);
-  if (!req.headers.authorization) {
-    return next(createError.Unauthorized('Access token is required'))
-  }
-  const token = req.headers.authorization.split(' ')[1]
+const withAuth = async function (req, res, next) {
+  const token = req.body.token || req.query.token || req.headers['x-access-token'] || req.cookies.token;
+
   if (!token) {
-    return next(createError.Unauthorized())
+    throw new createHttpError.Unauthorized();
+  } else {
+    try {
+      const result = await jwt.verifyAccessToken(token);
+      console.log('verified');
+      req.userId = result.payload.id;
+      console.log('req ' + req.userId);
+      next();
+    } catch (err) {
+      throw new createHttpError.Unauthorized();
+    }
   }
-  jwt.verifyAccessToken(token).then(user => {
-    req.user = user
-    next()
-  }).catch (e => {
-    console.log('did not find user - ' + token);
-    next(createError.Unauthorized(e.message))
-  })
-}
+};
 
-export default auth;
+export default withAuth;

@@ -3,17 +3,19 @@ import p from '@prisma/client';
 
 const router = express.Router();
 const prisma = new p.PrismaClient();
-import requireAuth from '../middlewares/auth.js';
-import AuthService from '../services/auth.service.js';
+import withAuth from '../middlewares/auth.js';
+import { validateHost } from '../utils/validators.js';
 
-router.get('/', requireAuth, async (req, res, next) => {
+router.get('/', withAuth, async (req, res, next) => {
   try {
-    const token = req.headers.authorization.split(' ')[1];
-    const jwtUser = await AuthService.getCurrentUser(token);
+    const scrimId = req.params.id;
+    if (!validateHost(req.userId, scrimId)) {
+      res.status(401);
+    }
 
     const user = await prisma.user.findFirst({
       where: {
-        id: Number(jwtUser.id),
+        id: Number(req.userId),
       },
     });
 
@@ -50,14 +52,16 @@ router.get('/', requireAuth, async (req, res, next) => {
   }
 });
 
-router.post('/', requireAuth, async (req, res, next) => {
+router.post('/', withAuth, async (req, res, next) => {
   try {
-    const token = req.headers.authorization.split(' ')[1];
-    const jwtUser = await AuthService.getCurrentUser(token);
+    const scrimId = req.params.id;
+    if (!validateHost(req.userId, scrimId)) {
+      res.status(401);
+    }
 
     const result = await prisma.scrim.create({
       data: {
-        hostId: jwtUser.id,
+        hostId: req.userId,
       },
     });
     res.json({ teams: [], pool: [], ...result });
@@ -69,9 +73,30 @@ router.post('/', requireAuth, async (req, res, next) => {
   }
 });
 
-router.get('/:id', async (req, res, next) => {
+router.get('/:id', withAuth, async (req, res, next) => {
+  const scrimId = req.params.id;
+  if (!validateHost(req.userId, scrimId)) {
+    res.status(401);
+  }
+
   const record = await prisma.scrim.findUnique({
-    where: { id: Number(req.params.id) },
+    where: { id: Number(scrimId) },
+    include: {
+      pool: {
+        include: {
+          summoner: true,
+        },
+      },
+      teams: {
+        include: {
+          members: {
+            include: {
+              summoner: true,
+            },
+          },
+        },
+      },
+    },
   });
 
   if (!record) {
@@ -81,14 +106,32 @@ router.get('/:id', async (req, res, next) => {
   res.json(record);
 });
 
-router.patch('/:id', async (req, res, next) => {
+router.patch('/:id', withAuth, async (req, res, next) => {
   try {
+    const scrimId = req.params.id;
+    if (!validateHost(req.userId, scrimId)) {
+      res.status(401);
+    }
+
+    const scrim = { ...req.body };
     await prisma.scrim.update({
       where: {
-        id: Number(req.params.id),
+        id: Number(scrimId),
       },
       data: {
-        ...req.body,
+        id: scrim.id,
+        autoDraft: scrim.autoDraft,
+        autoBalance: scrim.autoBalance,
+        draftOrder: scrim.draftOrder,
+        sideOrder: scrim.sideOrder,
+        step: scrim.step,
+        teamSize: scrim.teamSize,
+        pool: {
+          connect: Array.isArray(scrim.pool) ? scrim.pool.map((member) => ({ id: member.id })) : [],
+        },
+        teams: {
+          connect: Array.isArray(scrim.teams) ? scrim.teams.map((team) => ({ id: team.id })) : [],
+        },
       },
     });
 
@@ -96,17 +139,23 @@ router.patch('/:id', async (req, res, next) => {
       message: 'Success',
     });
   } catch (err) {
+    console.log(err);
     res.status(500).json({
       message: 'An error occurred updating the scrim',
     });
   }
 });
 
-router.delete('/:id', async (req, res, next) => {
+router.delete('/:id', withAuth, async (req, res, next) => {
   try {
+    const scrimId = req.params.id;
+    if (!validateHost(req.userId, scrimId)) {
+      res.status(401);
+    }
+
     await prisma.scrim.delete({
       where: {
-        id: Number(req.params.id),
+        id: Number(scrimId),
       },
     });
     res.json({

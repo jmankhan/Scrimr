@@ -10,6 +10,7 @@ import RegistrationForm from './components/RegistrationForm';
 import Logout from './components/Logout';
 import MyScrims from './components/MyScrims';
 import InHouseLanding from './components/InHouseLanding';
+import Profile from './components/Profile';
 import { Dimmer, Loader } from 'semantic-ui-react';
 
 function App() {
@@ -27,6 +28,14 @@ function App() {
               element={
                 <PrivateRoute redirectTo="/">
                   <Logout />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/profile"
+              element={
+                <PrivateRoute>
+                  <Profile />
                 </PrivateRoute>
               }
             />

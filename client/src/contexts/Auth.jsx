@@ -1,6 +1,12 @@
-import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
-import { useLocation } from 'react-router-dom';
-import API from '../api';
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
+import { useLocation } from "react-router-dom";
+import API from "../api";
 
 const AuthContext = createContext();
 
@@ -18,9 +24,19 @@ export function AuthProvider({ children }) {
 
   // check if user is logged in initially
   useEffect(() => {
-    const user = API.getCurrentUser();
-    setUser(user);
-    setLoading(false);
+    setLoading(true);
+    const getCurrentUser = async () => {
+      const response = await API.getCurrentUser();
+      setUser(response.user);
+    };
+
+    try {
+      getCurrentUser();
+    } catch (err) {
+      setError(err);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   const value = useMemo(() => ({ user, error }), [user, error]);
@@ -45,13 +61,17 @@ export function AuthProvider({ children }) {
     }
   }
 
-  function logout() {
+  async function logout() {
     setUser(null);
-    API.logout();
+    await API.logout();
   }
 
   return (
-    <AuthContext.Provider value={{ value, login, logout, register, error, loading }}>{children}</AuthContext.Provider>
+    <AuthContext.Provider
+      value={{ value, login, logout, register, error, loading }}
+    >
+      {children}
+    </AuthContext.Provider>
   );
 }
 
