@@ -1,7 +1,7 @@
 import p from '@prisma/client';
 import createError from 'http-errors';
 const prisma = new p.PrismaClient();
-
+import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
 import jwt from '../utils/jwt.js';
 import SummonerService from './summoner.service.js';
@@ -45,9 +45,11 @@ class AuthService {
       },
     });
 
+    const confirmationCode = crypto.randomBytes(32).toString('base64').replace(/\//g, '_').replace(/\+/g, '-');
     const user = await prisma.user.create({
       data: {
         email,
+        confirmationCode,
         password: bcrypt.hashSync(password, 8),
         summoner: {
           connect: {
@@ -58,7 +60,7 @@ class AuthService {
     });
     data.accessToken = await jwt.signAccessToken(user);
 
-    return data;
+    return { ...data, ...user };
   }
 
   static async login(data) {
@@ -74,7 +76,6 @@ class AuthService {
     const checkPassword = bcrypt.compareSync(password, user.password);
     if (!checkPassword) throw createError(401, 'Invalid credentials');
     delete user.password;
-    console.log('got kinda far');
     const accessToken = await jwt.signAccessToken(user);
     return accessToken;
   }

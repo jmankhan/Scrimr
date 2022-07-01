@@ -51,18 +51,19 @@ router.post('/register', async function (req, res, next) {
   try {
     const user = await AuthService.register(req.body);
     await sendEmail({
-      from: 'noreply@scrimr.gg',
+      from: 'jmankhan1@gmail.com',
       to: user.email,
       subject: 'Confirmation Code',
+      text: `Confirm at ${process.env.DOMAIN}/confirm/${user.confirmationCode}`,
       html: `<h1>Email Confirmation</h1>
         <h2>Hello ${user.name}</h2>
         <p>Thank you for subscribing. Please confirm your email by clicking on the following link</p>
-        <a href="${process.env.DOMAIN}/confirm/${confirmationCode}">Click here</a>
+        <a href="${process.env.DOMAIN}/confirm/${user.confirmationCode}">Click here</a>
         </div>`,
     });
 
     res.status(200).json({
-      message: 'Confirmation email sent',
+      message: `Confirmation email sent to ${user.email}`,
       user,
     });
   } catch (e) {
@@ -99,6 +100,26 @@ router.post('/logout', withAuth, async function (req, res, next) {
 
 router.get('/confirm/:code', withAuth, async (req, res, next) => {
   const userId = req.userId;
+  const user = await prisma.user.findUnique({
+    where: {
+      id: Number(userId),
+    },
+  });
+
+  if (user.confirmationCode === req.params.code || user.verified) {
+    await prisma.user.update({
+      where: {
+        id: Number(userId),
+      },
+      data: {
+        verified: true,
+      },
+    });
+
+    res.status(200);
+  } else {
+    res.status(401);
+  }
 });
 
 export default router;

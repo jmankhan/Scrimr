@@ -14,7 +14,6 @@ const wrapper = {
   verifyAccessToken: async (token) => {
     try {
       const payload = await jwt.verify(token, secret);
-      console.log('payload ' + payload);
       return payload;
     } catch (err) {
       throw Error(err.name === 'JsonWebTokenError' ? 'Unauthorized' : err.message);

@@ -1,17 +1,11 @@
-import nodemailer from 'nodemailer';
+import email from '@sendgrid/mail';
+email.setApiKey(process.env.SENDGRID_KEY);
 
-const transport = nodemailer.createTransport({
-  service: process.env.EMAIL_SERVICE,
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
-});
-
-export const sendEmail = (to, subject, html) => {
-  return transport.sendMail({
+export const sendEmail = ({ to, subject, html, text }) => {
+  return email.send({
     from: process.env.EMAIL_FROM,
     to,
+    text,
     subject,
     html,
   });
