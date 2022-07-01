@@ -54,6 +54,10 @@ app.use('/api/summoner/', summonerRouter);
 app.use('/api/team', teamRouter);
 app.use('/api/user', userRouter);
 
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'client', 'build', 'index.html'));
+});
+
 app.use((error, req, res, next) => {
   console.log(error);
   error.statusCode = error.statusCode || 500;
