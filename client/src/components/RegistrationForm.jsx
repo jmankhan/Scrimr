@@ -9,8 +9,9 @@ import {
   Message,
   Segment,
 } from "semantic-ui-react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import useAuth from "../contexts/Auth";
+import { NotificationManager } from "react-notifications";
 
 const RegistrationForm = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -31,10 +32,12 @@ const RegistrationForm = () => {
   const handleSubmit = async () => {
     setIsLoading(true);
     try {
-      if (!data.email || !data.summonerName || !data.password) {
+      const { email, summonerName, password } = data;
+      if (!email || !summonerName || !password) {
         setMessage("All fields are required");
       } else {
-        await auth.register(data.email, data.summonerName, data.password);
+        const message = await auth.register({ email, summonerName, password });
+        NotificationManager.success(message);
         navigate("/");
       }
     } catch (err) {

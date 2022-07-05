@@ -5,6 +5,8 @@ const client = axios.create({
   baseURL: API_URL,
   withCredentials: true,
 });
+client.defaults.withCredentials = true;
+
 class API {
   static createMember = async (summonerId, scrimId) => {
     const member = {
@@ -16,7 +18,7 @@ class API {
   };
 
   static createScrim = async () => {
-    const response = await client.post("/scrim", {}, { withCredentials: true });
+    const response = await client.post("/scrim", {});
     return response.data;
   };
 
@@ -70,13 +72,13 @@ class API {
     return response.statusText;
   };
 
-  static register = async (email, password, name) => {
+  static register = async (email, summonerName, password) => {
     const response = await client.post("/user/register", {
       email,
+      summonerName,
       password,
-      name,
     });
-    return response.statusText;
+    return response.data;
   };
 
   static saveProfile = async (profile) => {

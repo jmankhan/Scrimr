@@ -50,23 +50,29 @@ router.patch('/profile', withAuth, async function (req, res, next) {
 router.post('/register', async function (req, res, next) {
   try {
     const user = await AuthService.register(req.body);
-    await sendEmail({
-      from: 'jmankhan1@gmail.com',
-      to: user.email,
-      subject: 'Confirmation Code',
-      text: `Confirm at ${process.env.DOMAIN}/confirm/${user.confirmationCode}`,
-      html: `<h1>Email Confirmation</h1>
-        <h2>Hello ${user.name}</h2>
-        <p>Thank you for subscribing. Please confirm your email by clicking on the following link</p>
-        <a href="${process.env.DOMAIN}/confirm/${user.confirmationCode}">Click here</a>
-        </div>`,
-    });
+    if (!process.env.NODE_ENV !== 'dev') {
+      await sendEmail({
+        from: 'jmankhan1@gmail.com',
+        to: user.email,
+        subject: 'Confirmation Code',
+        text: `Confirm at ${process.env.DOMAIN}/confirm/${user.confirmationCode}`,
+        html: `<h1>Email Confirmation</h1>
+          <h2>Hello ${user.name}</h2>
+          <p>Thank you for subscribing. Please confirm your email by clicking on the following link</p>
+          <a href="${process.env.DOMAIN}/confirm/${user.confirmationCode}">Click here</a>
+          </div>`,
+      });
+    }
 
-    res.status(200).json({
-      message: `Confirmation email sent to ${user.email}`,
-      user,
-    });
-  } catch (e) {
+    const token = await AuthService.login(req.body);
+    res
+      .cookie('token', token, { httpOnly: true })
+      .status(200)
+      .json({
+        message: `Confirmation email sent to ${user.email}`,
+        user,
+      });
+  } catch (err) {
     res.status(500).json({ message: err });
   }
 });

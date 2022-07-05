@@ -51,6 +51,7 @@ class AuthService {
         email,
         confirmationCode,
         password: bcrypt.hashSync(password, 8),
+        name: summonerName,
         summoner: {
           connect: {
             id: summoner.id,
@@ -58,9 +59,16 @@ class AuthService {
         },
       },
     });
-    data.accessToken = await jwt.signAccessToken(user);
-
-    return { ...data, ...user };
+    data.accessToken = await jwt.signAccessToken({ id: user.id });
+    const fullUser = await prisma.user.findUnique({
+      where: {
+        id: user.id,
+      },
+      include: {
+        summoner: true,
+      },
+    });
+    return { ...fullUser };
   }
 
   static async login(data) {
@@ -75,8 +83,7 @@ class AuthService {
     }
     const checkPassword = bcrypt.compareSync(password, user.password);
     if (!checkPassword) throw createError(401, 'Invalid credentials');
-    delete user.password;
-    const accessToken = await jwt.signAccessToken(user);
+    const accessToken = await jwt.signAccessToken({ id: user.id });
     return accessToken;
   }
 

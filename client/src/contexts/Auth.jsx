@@ -1,5 +1,6 @@
 import React, {
   createContext,
+  useCallback,
   useContext,
   useEffect,
   useMemo,
@@ -7,63 +8,64 @@ import React, {
 } from "react";
 import { useLocation } from "react-router-dom";
 import API from "../api";
-
+import { useNavigate } from "react-router-dom";
 const AuthContext = createContext();
 
-export function AuthProvider({ children }) {
-  const [user, setUser] = useState();
+export function AuthProvider({ initialUser, children }) {
+  const [user, setUser] = useState(initialUser);
   const [error, setError] = useState();
-  const [loading, setLoading] = useState(true);
-
+  const [loading, setLoading] = useState(false);
   const location = useLocation();
+  const value = useMemo(() => ({ user, error }), [user, error]);
 
   // reset error state if path changes
   useEffect(() => {
     if (error) setError(null);
   }, [location.pathname]);
 
-  // check if user is logged in initially
   useEffect(() => {
-    setLoading(true);
-    const getCurrentUser = async () => {
-      const response = await API.getCurrentUser();
-      setUser(response.user);
-    };
-
-    try {
-      getCurrentUser();
-    } catch (err) {
-      setError(err);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  const value = useMemo(() => ({ user, error }), [user, error]);
+    setUser(initialUser);
+  }, [initialUser]);
 
   async function login(email, password) {
     try {
-      const { user } = await API.login(email, password);
-      setUser(user);
+      setLoading(true);
+      await API.login(email, password);
+      const response = await API.getCurrentUser();
+      setUser(response.user);
     } catch (err) {
       setError(err.response.data.message);
       throw err;
+    } finally {
+      setLoading(false);
     }
   }
 
-  async function register(email, name, password) {
+  async function register({ email, summonerName, password }) {
     try {
-      const { user } = await API.register(email, name, password);
-      setUser(user);
+      setLoading(true);
+      const response = await API.register(email, summonerName, password);
+      setUser(response.user);
+      return response.message;
     } catch (err) {
       setError(err.response.data.message);
       throw err;
+    } finally {
+      setLoading(false);
     }
   }
 
   async function logout() {
-    setUser(null);
-    await API.logout();
+    setLoading(true);
+    try {
+      setUser(null);
+      await API.logout();
+    } catch (err) {
+      setError(err.response.data.message);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (

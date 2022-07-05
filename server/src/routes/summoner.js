@@ -89,7 +89,7 @@ router.post('/:id/link', withAuth, async (req, res, next) => {
       message: 'Success',
     });
   } catch (err) {
-    res.status(50).json({ message: err });
+    res.status(500).json({ message: err });
   }
 });
 
@@ -111,7 +111,7 @@ router.post('/:id/sync', withAuth, async (req, res, next) => {
       message: 'Success',
     });
   } catch (err) {
-    res.status(50).json({ message: err });
+    res.status(500).json({ message: err });
   }
 });
 

@@ -9,6 +9,7 @@ import {
   Loader,
 } from "semantic-ui-react";
 import API from "../api";
+import useAuth from "../contexts/Auth";
 
 const roleOptions = [
   { text: "Top", value: "top" },
@@ -19,30 +20,18 @@ const roleOptions = [
   { text: "Fill", value: "fill" },
 ];
 const Profile = () => {
-  const [loading, setLoading] = useState(true);
-  const [user, setUser] = useState();
+  const auth = useAuth();
+  const [loading, setLoading] = useState(false);
+  const [user, setUser] = useState(auth.value.user);
   const [primaryRoleOptions, setPrimaryRoleOptions] = useState(roleOptions);
   const [secondaryRoleOptions, setSecondaryRoleOptions] = useState(
     roleOptions.filter((option) => option.value !== "fill")
   );
 
   useEffect(() => {
-    const getUser = async () => {
-      setLoading(true);
-      const response = await API.getProfile();
-      setUser(response.user);
-    };
-
-    try {
-      if (!user) {
-        getUser();
-      }
-    } catch (err) {
-      NotificationManager.error("Error", err.response.data.error, 5000);
-    } finally {
-      setLoading(false);
-    }
-  }, [user]);
+    setUser(auth.value.user);
+    setLoading(false);
+  }, [auth, auth.value]);
 
   const handleChangePassword = () => {
     NotificationManager.error("Error", "Coming soon", 5000);
@@ -101,7 +90,7 @@ const Profile = () => {
                 <Card.Header>Summoner</Card.Header>
                 {user.summoner && (
                   <Form.Group>
-                    <p>{user.summoner.name}</p>
+                    <p style={{ marginTop: "auto" }}>{user.summoner.name}</p>
                     <Form.Button
                       label="&nbsp;"
                       variant="label-hidden"

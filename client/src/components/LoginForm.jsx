@@ -34,7 +34,8 @@ const LoginForm = () => {
     try {
       await auth.login(data.email, data.password);
       // go to previous page or go home if there is no previous
-      navigate(location.key !== "default" ? -1 : "/");
+      const from = location.state?.from?.pathname || "/";
+      navigate(from, { replace: true });
     } catch (err) {
       setMessage(err.response.data.message);
     } finally {
