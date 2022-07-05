@@ -54,11 +54,6 @@ router.get('/', withAuth, async (req, res, next) => {
 
 router.post('/', withAuth, async (req, res, next) => {
   try {
-    const scrimId = req.params.id;
-    if (!validateHost(req.userId, scrimId)) {
-      res.status(401);
-    }
-
     const result = await prisma.scrim.create({
       data: {
         hostId: req.userId,
