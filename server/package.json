@@ -7,6 +7,9 @@
     "dev": "nodemon --watch './src/**/*.js' --exec \"node --experimental-specifier-resolution=node\" ./bin/www",
     "debug": "PORT=3001 node --inspect ./bin/www"
   },
+  "engines": {
+    "node": "14.7.0"
+  },
   "type": "module",
   "dependencies": {
     "@babel/core": "^7.17.10",
