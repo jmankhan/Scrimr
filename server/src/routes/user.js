@@ -17,7 +17,7 @@ router.get('/profile', withAuth, async function (req, res) {
 
     return res.json({ user });
   } catch (e) {
-    res.status(e.statusCode).json({ message: e.message });
+    res.status(500).json({ message: e.message });
   }
 });
 
@@ -43,7 +43,7 @@ router.patch('/profile', withAuth, async function (req, res, next) {
     });
     res.status(200).json({ user: updatedUser });
   } catch (e) {
-    next(e);
+    res.status(500).json({ message: err });
   }
 });
 
@@ -67,7 +67,7 @@ router.post('/register', async function (req, res, next) {
       user,
     });
   } catch (e) {
-    next(e);
+    res.status(500).json({ message: err });
   }
 });
 
@@ -76,22 +76,26 @@ router.post('/login', async function (req, res, next) {
     const token = await AuthService.login(req.body);
     res.cookie('token', token, { httpOnly: true }).sendStatus(200);
   } catch (e) {
-    res.status(e.statusCode).json({ message: e.message });
+    res.status(500).json({ message: e.message });
   }
 });
 
 router.get('/me', withAuth, async function (req, res, next) {
-  const userId = req.userId;
-  const user = await prisma.user.findUnique({
-    where: {
-      id: userId,
-    },
-    include: {
-      summoner: true,
-    },
-  });
+  try {
+    const userId = req.userId;
+    const user = await prisma.user.findUnique({
+      where: {
+        id: userId,
+      },
+      include: {
+        summoner: true,
+      },
+    });
 
-  res.json({ user });
+    res.json({ user });
+  } catch (err) {
+    res.status(500).json({ message: err });
+  }
 });
 
 router.post('/logout', withAuth, async function (req, res, next) {
@@ -99,26 +103,30 @@ router.post('/logout', withAuth, async function (req, res, next) {
 });
 
 router.get('/confirm/:code', withAuth, async (req, res, next) => {
-  const userId = req.userId;
-  const user = await prisma.user.findUnique({
-    where: {
-      id: Number(userId),
-    },
-  });
-
-  if (user.confirmationCode === req.params.code || user.verified) {
-    await prisma.user.update({
+  try {
+    const userId = req.userId;
+    const user = await prisma.user.findUnique({
       where: {
         id: Number(userId),
       },
-      data: {
-        verified: true,
-      },
     });
 
-    res.status(200);
-  } else {
-    res.status(401);
+    if (user.confirmationCode === req.params.code || user.verified) {
+      await prisma.user.update({
+        where: {
+          id: Number(userId),
+        },
+        data: {
+          verified: true,
+        },
+      });
+
+      res.status(200);
+    } else {
+      res.status(401);
+    }
+  } catch (err) {
+    res.status(500).json({ message: err });
   }
 });
 

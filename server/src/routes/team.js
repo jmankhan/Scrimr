@@ -17,7 +17,6 @@ router.get('/:id', withAuth, async (req, res, next) => {
       team,
     });
   } catch (err) {
-    console.log(err);
     res.statusCode(404);
   }
 });
@@ -74,7 +73,6 @@ router.post('/', withAuth, async (req, res, next) => {
       teams,
     });
   } catch (err) {
-    console.log(err);
     res.status(500).json({
       message: 'An error occurred while creating the team',
     });
@@ -125,7 +123,6 @@ router.patch('/', withAuth, async (req, res, next) => {
       teams,
     });
   } catch (err) {
-    console.log(err);
     res.status(500).json({
       message: 'An error occurred while updating the team',
     });
@@ -158,7 +155,6 @@ router.delete('/', withAuth, async (req, res, next) => {
       message: 'Success',
     });
   } catch (err) {
-    console.log(err);
     res.status(500).json({
       message: 'An error occurred while deleting the team',
     });

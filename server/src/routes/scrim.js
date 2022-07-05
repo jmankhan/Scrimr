@@ -66,7 +66,6 @@ router.post('/', withAuth, async (req, res, next) => {
     });
     res.json({ teams: [], pool: [], ...result });
   } catch (err) {
-    console.log(err);
     res.status(500).json({
       message: 'An error occurred creating this scrim',
     });
@@ -74,36 +73,40 @@ router.post('/', withAuth, async (req, res, next) => {
 });
 
 router.get('/:id', withAuth, async (req, res, next) => {
-  const scrimId = req.params.id;
-  if (!validateHost(req.userId, scrimId)) {
-    res.status(401);
-  }
+  try {
+    const scrimId = req.params.id;
+    if (!validateHost(req.userId, scrimId)) {
+      res.status(401);
+    }
 
-  const record = await prisma.scrim.findUnique({
-    where: { id: Number(scrimId) },
-    include: {
-      pool: {
-        include: {
-          summoner: true,
+    const record = await prisma.scrim.findUnique({
+      where: { id: Number(scrimId) },
+      include: {
+        pool: {
+          include: {
+            summoner: true,
+          },
         },
-      },
-      teams: {
-        include: {
-          members: {
-            include: {
-              summoner: true,
+        teams: {
+          include: {
+            members: {
+              include: {
+                summoner: true,
+              },
             },
           },
         },
       },
-    },
-  });
+    });
 
-  if (!record) {
-    res.statusCode(404);
+    if (!record) {
+      res.statusCode(404);
+    }
+
+    res.json(record);
+  } catch (err) {
+    res.status(500).json({ message: err });
   }
-
-  res.json(record);
 });
 
 router.patch('/:id', withAuth, async (req, res, next) => {
@@ -139,7 +142,6 @@ router.patch('/:id', withAuth, async (req, res, next) => {
       message: 'Success',
     });
   } catch (err) {
-    console.log(err);
     res.status(500).json({
       message: 'An error occurred updating the scrim',
     });

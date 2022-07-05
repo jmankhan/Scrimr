@@ -67,7 +67,7 @@ app.get('*', (req, res) => {
 app.use((error, req, res, next) => {
   console.log(error);
   error.statusCode = error.statusCode || 500;
-  return res.status(error.statusCode).json({ error: error.toString() });
+  return res.status(error.statusCode).json({ message: error.toString() });
 });
 
 export default app;

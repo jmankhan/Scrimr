@@ -17,114 +17,124 @@ router.get('/', async (req, res, next) => {
 });
 
 router.post('/', withAuth, async (req, res, next) => {
-  // const errors = validationResult(req);
-  // if (!errors.isEmpty()) {
-  //   console.log('validation error');
-  //   res.status(400).json({
-  //     errors: errors.array().map((err) => err.msg),
-  //   });
-  // }
-
-  const { summonerId, scrimId } = req.body;
-  const safeSummonerId = decodeURI(summonerId);
-  let summoner = await prisma.summoner.findUnique({
-    where: {
-      id: safeSummonerId,
-    },
-  });
-
-  if (!summoner) {
-    try {
-      const summonerResponse = await SummonerService.getSummonerByName(safeSummonerId);
-      summoner = await prisma.summoner.create({
-        data: {
-          ...summonerResponse,
-        },
-      });
-    } catch (err) {
-      return next(err);
-    }
-  }
-
-  const memberExists = await prisma.member.findFirst({
-    where: {
-      AND: [
-        {
-          summonerId: {
-            equals: safeSummonerId,
-          },
-        },
-        {
-          scrimId: {
-            equals: scrimId,
-          },
-        },
-      ],
-    },
-  });
-
-  if (memberExists) {
-    return next(new Error('This member is already in the pool'));
-  }
-
-  const member = await prisma.member
-    .create({
-      data: {
-        summonerId: summoner.id,
-        scrimId,
+  try {
+    const { summonerId, scrimId } = req.body;
+    const safeSummonerId = decodeURI(summonerId);
+    let summoner = await prisma.summoner.findUnique({
+      where: {
+        id: safeSummonerId,
       },
-    })
-    .catch(next);
+    });
 
-  res.json({
-    member,
-  });
+    if (!summoner) {
+      try {
+        const summonerResponse = await SummonerService.getSummonerByName(safeSummonerId);
+        summoner = await prisma.summoner.create({
+          data: {
+            ...summonerResponse,
+          },
+        });
+      } catch (err) {
+        return next(err);
+      }
+    }
+
+    const memberExists = await prisma.member.findFirst({
+      where: {
+        AND: [
+          {
+            summonerId: {
+              equals: safeSummonerId,
+            },
+          },
+          {
+            scrimId: {
+              equals: scrimId,
+            },
+          },
+        ],
+      },
+    });
+
+    if (memberExists) {
+      return next(new Error('This member is already in the pool'));
+    }
+
+    const member = await prisma.member
+      .create({
+        data: {
+          summonerId: summoner.id,
+          scrimId,
+        },
+      })
+      .catch(next);
+
+    res.json({
+      member,
+    });
+  } catch (err) {
+    res.status(500).json({
+      message: err,
+    });
+  }
 });
 
 router.get('/:id', withAuth, async (req, res, next) => {
-  const member = await prisma.member.findUnique({
-    where: {
-      id: Number(req.params.id),
-    },
-    include: {
-      summoner: true,
-      team: true,
-      scrim: true,
-    },
-  });
+  try {
+    const member = await prisma.member.findUnique({
+      where: {
+        id: Number(req.params.id),
+      },
+      include: {
+        summoner: true,
+        team: true,
+        scrim: true,
+      },
+    });
 
-  if (member) {
-    res.status(200).json({
-      member,
-    });
-  } else {
-    res.status(404).json({
-      message: 'Member not found',
-    });
+    if (member) {
+      res.status(200).json({
+        member,
+      });
+    } else {
+      res.status(404).json({
+        message: 'Member not found',
+      });
+    }
+  } catch (err) {
+    res.status(500).json({ message: err });
   }
 });
 
 router.delete('/:id', withAuth, async (req, res, next) => {
-  await prisma.member.delete({
-    where: {
-      id: Number(req.params.id),
-    },
-  });
+  try {
+    await prisma.member.delete({
+      where: {
+        id: Number(req.params.id),
+      },
+    });
 
-  res.status(200).json({
-    message: 'Success',
-  });
+    res.status(200).json({
+      message: 'Success',
+    });
+  } catch (err) {
+    res.status(500).json({ message: err });
+  }
 });
 
 router.put('/:id', withAuth, async (req, res, next) => {
-  await prisma.member.update({
-    where: {
-      id: Number(req.params.id),
-    },
-    data: {
-      ...req.body,
-    },
-  });
+  try {
+    await prisma.member.update({
+      where: {
+        id: Number(req.params.id),
+      },
+      data: {
+        ...req.body,
+      },
+    });
+  } catch (err) {
+    res.status(500).json({ message: err });
+  }
 });
 
 export default router;

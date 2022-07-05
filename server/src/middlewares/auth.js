@@ -5,16 +5,14 @@ const withAuth = async function (req, res, next) {
   const token = req.body.token || req.query.token || req.headers['x-access-token'] || req.cookies.token;
 
   if (!token) {
-    throw new createHttpError.Unauthorized();
+    next(new createHttpError.Unauthorized());
   } else {
     try {
       const result = await jwt.verifyAccessToken(token);
-      console.log('verified');
       req.userId = result.payload.id;
-      console.log('req ' + req.userId);
       next();
     } catch (err) {
-      throw new createHttpError.Unauthorized();
+      next(new createHttpError.Unauthorized());
     }
   }
 };
