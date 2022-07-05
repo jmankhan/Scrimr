@@ -54,6 +54,12 @@ app.use('/api/summoner/', summonerRouter);
 app.use('/api/team', teamRouter);
 app.use('/api/user', userRouter);
 
+app.get('/riot.txt', (req, res) => {
+  const txt = '979362b9-5e14-43db-bce8-f294221b781d';
+  res.attachment('riot.txt');
+  res.type('txt');
+  res.send(txt);
+});
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, '..', '..', 'client', 'build', 'index.html'));
 });
