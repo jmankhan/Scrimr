@@ -8,6 +8,10 @@ const client = axios.create({
 client.defaults.withCredentials = true;
 
 class API {
+  static confirmCode = async (code) => {
+    await client.get(`/user/confirm?code=${code}`);
+  };
+
   static createMember = async (summonerId, scrimId) => {
     const member = {
       summonerId,

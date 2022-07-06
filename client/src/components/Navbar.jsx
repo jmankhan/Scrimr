@@ -33,9 +33,9 @@ const DesktopContainer = (props) => {
               <Menu.Item active={/\/in-house(\/\w)?/.test(location.pathname)} as={Link} to="/in-house">
                 In House
               </Menu.Item>
-              <Menu.Item active={location.pathname === '/my-scrims'} as={Link} to="/my-scrims">
+              {/* <Menu.Item active={location.pathname === '/my-scrims'} as={Link} to="/my-scrims">
                 My Scrims
-              </Menu.Item>
+              </Menu.Item> */}
               <Menu.Item position="right">
                 {props.user && (
                   <Dropdown item text={props.user.name}>

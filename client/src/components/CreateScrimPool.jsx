@@ -9,18 +9,23 @@ import {
   Header,
   Icon,
   Input,
+  Image,
   Message,
   Search,
 } from "semantic-ui-react";
 import Member from "./Member";
 import API from "../api";
 import "./CreateScrimPool.css";
+import useRankImages from "../hooks/useRankImage";
 
-const searchResultRenderer = ({ id, name }) => {
+const searchResultRenderer = ({ id, name, rank }) => {
+  const [image, title] = useRankImages(rank);
+
   return (
-    <p id={id} title={name}>
-      {name} <kbd style={{ float: "right", display: "none" }}>Enter</kbd>
-    </p>
+    <div id={id} title={name} className="searchResult">
+      {image && <img className="rankImage" src={image} title={title} />}
+      {name} <kbd>Enter</kbd>
+    </div>
   );
 };
 
@@ -59,6 +64,7 @@ const CreateScrimPool = (props) => {
   }, [props.pool, props.autoDraft, props.autoBalance]);
 
   const handleSearch = async (value) => {
+    setSearchValue(value);
     if (value) {
       setIsSearchLoading(true);
       const result = await API.search(value);
@@ -67,22 +73,22 @@ const CreateScrimPool = (props) => {
           id: r.id,
           title: r.name,
           name: r.name,
+          rank: r.rank,
         }))
       );
       setIsSearchLoading(false);
     }
-    setSearchValue(value);
   };
 
-  useEffect(() => {
-    const delayDebounceFn = setTimeout(() => {
-      if (searchValue) {
-        handleSearch(searchValue);
-      }
-    }, 400);
+  //   useEffect(() => {
+  //     const delayDebounceFn = setTimeout(() => {
+  //       if (searchValue) {
+  //         handleSearch(searchValue);
+  //       }
+  //     }, 400);
 
-    return () => clearTimeout(delayDebounceFn);
-  }, [searchValue]);
+  //     return () => clearTimeout(delayDebounceFn);
+  //   }, [searchValue]);
 
   const handleMessageClear = () => {
     setMessage(null);
@@ -157,7 +163,7 @@ const CreateScrimPool = (props) => {
       } = await API.createMember(summoner.id, props.scrimId);
       memberResponse = await API.getMember(id);
     } catch (err) {
-      props.onError(err.response.data.error);
+      props.onError(err.response.data.message);
     } finally {
       setSearchValue("");
       setSearchResults([]);
@@ -212,7 +218,7 @@ const CreateScrimPool = (props) => {
                 results={searchResults}
                 value={searchValue}
                 resultRenderer={searchResultRenderer}
-                onSearchChange={(e, d) => setSearchValue(d.value)}
+                onSearchChange={(e, d) => handleSearch(d.value)}
                 onResultSelect={addMember}
               />
             </Form>

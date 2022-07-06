@@ -12,6 +12,7 @@ import Logout from "./components/Logout";
 import MyScrims from "./components/MyScrims";
 import InHouseLanding from "./components/InHouseLanding";
 import Profile from "./components/Profile";
+import ConfirmCode from "./components/ConfirmCode";
 import { Dimmer, Loader } from "semantic-ui-react";
 import API from "./api/index.js";
 
@@ -29,7 +30,6 @@ function App() {
     try {
       getCurrrentUser();
     } catch (err) {
-    } finally {
       setLoading(false);
     }
   }, []);
@@ -66,8 +66,14 @@ function App() {
                   </PrivateRoute>
                 }
               />
-
-              {/* <Route path='/my-teams' element={<PrivateRoute><Team /></PrivateRoute>} /> */}
+              <Route
+                path="/confirm"
+                element={
+                  <PrivateRoute>
+                    <ConfirmCode />
+                  </PrivateRoute>
+                }
+              />
               <Route path="/in-house" element={<InHouseLanding />} />
               <Route
                 path="/in-house/create-scrim"
@@ -82,14 +88,6 @@ function App() {
                 element={
                   <PrivateRoute>
                     <CreateScrim />
-                  </PrivateRoute>
-                }
-              />
-              <Route
-                path="/my-scrims"
-                element={
-                  <PrivateRoute>
-                    <MyScrims />
                   </PrivateRoute>
                 }
               />

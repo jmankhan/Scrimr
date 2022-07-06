@@ -11,6 +11,7 @@ router.get('/', async (req, res, next) => {
       where: {
         name: {
           contains: value.replace(/[\\$'"]/g, '\\$&'),
+          mode: 'insensitive',
         },
       },
     });

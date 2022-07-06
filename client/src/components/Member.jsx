@@ -7,48 +7,10 @@ import {
   Placeholder,
   Segment,
 } from "semantic-ui-react";
-
-const importAll = (require) =>
-  require.keys().reduce((acc, next) => {
-    acc[next.replace("./", "")] = require(next);
-    return acc;
-  }, {});
-
-const images = importAll(
-  require.context("../assets/rank_emblems", false, /\.(png|jpe?g|svg)$/)
-);
-const tierMap = {
-  0: "IRON",
-  4: "BRONZE",
-  8: "SILVER",
-  12: "GOLD",
-  16: "PLATINUM",
-  20: "DIAMOND",
-  24: "MASTER",
-  28: "GRANDMASTER",
-  32: "CHALLENGER",
-};
-
-const divisionMap = {
-  0: "IV",
-  1: "III",
-  2: "II",
-  3: "I",
-};
+import useRankImages from "../hooks/useRankImage";
 
 const Member = (props) => {
-  let imageKey, tier, division;
-
-  if (props.summoner && props.summoner.rank) {
-    if (props.summoner.rank < 0) {
-      imageKey = "-1.png";
-    } else {
-      tier = props.summoner.rank - (props.summoner.rank % 4);
-      division = props.summoner.rank % 4;
-      imageKey = `0${Math.floor(props.summoner.rank / 4)}.png`;
-    }
-  }
-
+  const [imageSrc, title] = useRankImages(props.summoner?.rank);
   return (
     <Segment>
       <Grid verticalAlign="middle" columns="equal">
@@ -67,12 +29,8 @@ const Member = (props) => {
             {!props.isLoading && (
               <>
                 <Header style={{ whiteSpace: "nowrap" }}>
-                  {imageKey && (
-                    <Image
-                      src={images[imageKey]}
-                      alt={tierMap[tier] + " " + divisionMap[division]}
-                      title={tierMap[tier] + " " + divisionMap[division]}
-                    />
+                  {imageSrc && (
+                    <Image src={imageSrc} alt={title} title={title} />
                   )}
                   {props.summoner.name}{" "}
                 </Header>

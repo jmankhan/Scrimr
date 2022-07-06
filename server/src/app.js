@@ -6,6 +6,7 @@ import path from 'path';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import logger from 'morgan';
+import enforce from 'express-sslify';
 import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -39,12 +40,15 @@ app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
-app.use(express.static(path.join(__dirname, '..', '..', 'client', 'build')));
 app.use(function (req, res, next) {
   res.setHeader('Access-Control-Allow-Origin', process.env.WHITELISTED_DOMAINS || 'localhost:3000');
   res.setHeader('Access-Control-Allow-Credentials', true);
   next();
 });
+if (process.env.NODE_ENV !== 'dev') {
+  app.use(express.static(path.join(__dirname, '..', '..', 'client', 'build')));
+  app.use(enforce.HTTPS({ trustProtoHeader: process.env.NODE_ENV !== 'dev' }));
+}
 
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 app.use('/api/member/', memberRouter);
@@ -54,14 +58,12 @@ app.use('/api/summoner/', summonerRouter);
 app.use('/api/team', teamRouter);
 app.use('/api/user', userRouter);
 
-app.get('/riot.txt', (req, res) => {
-  const txt = '979362b9-5e14-43db-bce8-f294221b781d';
-  res.attachment('riot.txt');
-  res.type('txt');
-  res.send(txt);
-});
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, '..', '..', 'client', 'build', 'index.html'));
+  if (process.env.NODE_ENV === 'dev') {
+    res.sendStatus(404);
+  } else {
+    res.sendFile(path.join(__dirname, '..', '..', 'client', 'build', 'index.html'));
+  }
 });
 
 app.use((error, req, res, next) => {

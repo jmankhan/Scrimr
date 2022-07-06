@@ -55,7 +55,7 @@ router.post('/register', async function (req, res, next) {
         from: 'jmankhan1@gmail.com',
         to: user.email,
         subject: 'Confirmation Code',
-        text: `Confirm at ${process.env.DOMAIN}/confirm/${user.confirmationCode}`,
+        text: `Confirm at ${process.env.DOMAIN}/confirm?code=${user.confirmationCode}`,
         html: `<h1>Email Confirmation</h1>
           <h2>Hello ${user.name}</h2>
           <p>Thank you for subscribing. Please confirm your email by clicking on the following link</p>
@@ -108,7 +108,7 @@ router.post('/logout', withAuth, async function (req, res, next) {
   res.cookie('token', null).sendStatus(200);
 });
 
-router.get('/confirm/:code', withAuth, async (req, res, next) => {
+router.get('/confirm', withAuth, async (req, res, next) => {
   try {
     const userId = req.userId;
     const user = await prisma.user.findUnique({
@@ -117,7 +117,10 @@ router.get('/confirm/:code', withAuth, async (req, res, next) => {
       },
     });
 
-    if (user.confirmationCode === req.params.code || user.verified) {
+    console.log(user.confirmationCode);
+    console.log(req.query.code);
+    console.log(user.confirmationCode === req.query.code);
+    if (user.confirmationCode === req.query.code || user.verified) {
       await prisma.user.update({
         where: {
           id: Number(userId),
@@ -127,9 +130,9 @@ router.get('/confirm/:code', withAuth, async (req, res, next) => {
         },
       });
 
-      res.status(200);
+      res.sendStatus(200);
     } else {
-      res.status(401);
+      res.sendStatus(401);
     }
   } catch (err) {
     res.status(500).json({ message: err });

@@ -7,14 +7,15 @@ class SummonerService {
     try {
       const summonerResponse = await riotApi.Summoner.getByName(name, twisted.Constants.Regions.AMERICA_NORTH);
       return SummonerService.getSummonerByResponse(summonerResponse.response);
-    } catch(err) {
+    } catch (err) {
+      console.log('could not find summoner ' + name);
       throw Error('Summoner not found');
     }
   }
 
   static async getSummonerById(id) {
     const summonerResponse = await riotApi.Summoner.getById(id, twisted.Constants.Regions.AMERICA_NORTH);
-    if(summonerResponse.response) {
+    if (summonerResponse.response) {
       return SummonerService.getSummonerByResponse(summonerResponse.response);
     } else {
       throw Error('Summoner not found');
@@ -28,14 +29,14 @@ class SummonerService {
       name,
       icon: profileIconId,
       level: summonerLevel,
-      rank: -1
+      rank: -1,
     };
 
     const leagueDataResponse = await riotApi.League.bySummoner(id, twisted.Constants.Regions.AMERICA_NORTH);
-    if(leagueDataResponse) {
+    if (leagueDataResponse) {
       const leagues = leagueDataResponse.response;
-      const rankedSolo = leagues.find(l => l.queueType === 'RANKED_SOLO_5x5');
-      if(rankedSolo) {
+      const rankedSolo = leagues.find((l) => l.queueType === 'RANKED_SOLO_5x5');
+      if (rankedSolo) {
         summoner.rank = riotUtils.getRank(rankedSolo.tier, rankedSolo.rank);
       }
     } else {
