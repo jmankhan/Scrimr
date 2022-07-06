@@ -21,17 +21,19 @@ function App() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const getCurrrentUser = async () => {
-      const response = await API.getCurrentUser();
-      setInitialUser(response.user);
-      setLoading(false);
+    const getCurrentUser = async () => {
+      try {
+        const response = await API.getCurrentUser();
+        setInitialUser(response.user);
+        setLoading(false);
+      } catch (err) {
+        setLoading(false);
+      } finally {
+        setLoading(false);
+      }
     };
 
-    try {
-      getCurrrentUser();
-    } catch (err) {
-      setLoading(false);
-    }
+    getCurrentUser();
   }, []);
 
   return (
