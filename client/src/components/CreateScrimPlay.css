@@ -1,0 +1,34 @@
+@font-face {
+  font-family: 'Friz';
+  src: local('Friz'   ), url(../assets/friz-quadrata.otf) format('opentype');
+}
+
+.header {
+  font-family: 'Friz';
+  font-size: 1.5rem;
+}
+
+.cardContent {
+  background: linear-gradient(to bottom right, #efe2b8, #d7b740) !important;
+}
+
+.swapTeams {
+  position: absolute;
+  top: 50%;
+}
+
+.team1 {
+  background-color: #E55F2F !important;
+}
+
+.team1 div {
+  color: black;
+}
+
+.team2 {
+    background-color: #2B26C1 !important;
+}
+
+.team2 div {
+  color: white !important;
+}

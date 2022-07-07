@@ -38,11 +38,13 @@ const PrizeWheel = ({ disabled, sectors, onWinner }) => {
     ctx.save();
     // COLOR
     ctx.beginPath();
+    ctx.strokeStyle = "#000";
     ctx.fillStyle = sector.color;
     ctx.moveTo(rad, rad);
     ctx.arc(rad, rad, rad, ang, ang + arc);
     ctx.lineTo(rad, rad);
     ctx.fill();
+    ctx.stroke();
     // TEXT
     ctx.translate(rad, rad);
     ctx.rotate(ang + arc / 2);
@@ -126,13 +128,24 @@ const PrizeWheel = ({ disabled, sectors, onWinner }) => {
 };
 
 const CreateScrimPrizeWheel = (props) => {
-  const colors = ["#ff0000", "#00ff00", "#0000ff"];
+  const colors = [
+    "#445fa5",
+    "#643529",
+    "#293963",
+    "#576429",
+    "#CA9B8F",
+    "#8F9FC9",
+    "#BDCA8F",
+    "#A65944",
+    "#445FA5",
+    "#91A644",
+  ];
   const initialCaptains = props.members
     .filter((m) => m.isCaptain)
     .map((c, i) => ({
       id: c.id,
       label: c.summoner.name,
-      color: colors[i % 3],
+      color: colors[i % colors.length],
       member: c,
     }));
 
@@ -161,7 +174,6 @@ const CreateScrimPrizeWheel = (props) => {
           (team) => team.members.filter((member) => member.isCaptain)[0].id
         )
       );
-      const lastCaptains = draftOrder[draftOrder.length - 1];
       setCaptains([
         {
           id: lastCaptain.id,

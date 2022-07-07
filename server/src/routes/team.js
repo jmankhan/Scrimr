@@ -65,7 +65,11 @@ router.post('/', withAuth, async (req, res, next) => {
         },
       },
       include: {
-        members: true,
+        members: {
+          include: {
+            summoner: true,
+          },
+        },
       },
     });
 
@@ -73,6 +77,7 @@ router.post('/', withAuth, async (req, res, next) => {
       teams,
     });
   } catch (err) {
+    console.log(err);
     res.status(500).json({
       message: 'An error occurred while creating the team',
     });

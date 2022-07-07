@@ -1,15 +1,12 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useHotkeys } from "react-hotkeys-hook";
-import debounce from "lodash.debounce";
 import {
-  Checkbox,
   Container,
   Form,
   Grid,
   Header,
   Icon,
   Input,
-  Image,
   Message,
   Search,
 } from "semantic-ui-react";
@@ -192,55 +189,71 @@ const CreateScrimPool = (props) => {
     props.onChange(newData);
   };
 
-  return (
-    <Container>
-      <Grid columns={1}>
-        <Grid.Row>
-          <Grid.Column>
-            <Form error={message} onSubmit={addMember}>
-              <Message
-                error
-                floating
-                header="Error"
-                onDismiss={handleMessageClear}
-                content={message}
-              />
-              <Search
-                icon={
-                  <Icon name="search">
-                    <kbd className="searchHint">Cmd+K</kbd>
-                  </Icon>
-                }
-                input={{ fluid: true, ref: searchRef }}
-                loading={isSearchLoading}
-                minCharacters={3}
-                placeholder="Add Member"
-                results={searchResults}
-                value={searchValue}
-                resultRenderer={searchResultRenderer}
-                onSearchChange={(e, d) => handleSearch(d.value)}
-                onResultSelect={addMember}
-              />
-            </Form>
-          </Grid.Column>
-        </Grid.Row>
-      </Grid>
+  const formatMembers = () => {
+    if (!data) {
+      return [];
+    }
 
-      <Grid centered columns={3}>
-        <Grid.Row>
-          <Grid.Column>
-            <Input
-              label="Team Size"
-              type="number"
-              input={{ fluid: "true" }}
-              min={1}
-              max={10}
-              step={1}
-              defaultValue={data.teamSize || 5}
-              onChange={updateTeamSize}
-            />
-          </Grid.Column>
-          <Grid.Column>
+    return data.members.reduce((result, member, index) => {
+      const chunkIdx = Math.floor(index / 5);
+      if (!result[chunkIdx]) {
+        result[chunkIdx] = { id: chunkIdx, members: [] };
+      }
+      result[chunkIdx].members.push(member);
+      return result;
+    }, []);
+  };
+
+  return (
+    <div>
+      <Container>
+        <Grid columns={1}>
+          <Grid.Row>
+            <Grid.Column>
+              <Form error={message} onSubmit={addMember}>
+                <Message
+                  error
+                  floating
+                  header="Error"
+                  onDismiss={handleMessageClear}
+                  content={message}
+                />
+                <Search
+                  icon={
+                    <Icon name="search">
+                      <kbd className="searchHint">Cmd+K</kbd>
+                    </Icon>
+                  }
+                  input={{ fluid: true, ref: searchRef }}
+                  loading={isSearchLoading}
+                  minCharacters={2}
+                  placeholder="Add Member"
+                  results={searchResults}
+                  value={searchValue}
+                  resultRenderer={searchResultRenderer}
+                  onSearchChange={(e, d) => handleSearch(d.value)}
+                  onResultSelect={addMember}
+                />
+              </Form>
+            </Grid.Column>
+          </Grid.Row>
+        </Grid>
+
+        <Grid centered columns={1}>
+          <Grid.Row>
+            <Grid.Column>
+              <Input
+                label="Team Size"
+                type="number"
+                input={{ fluid: "true" }}
+                min={1}
+                max={10}
+                step={1}
+                defaultValue={data.teamSize || 5}
+                onChange={updateTeamSize}
+              />
+            </Grid.Column>
+            {/* <Grid.Column>
             <Checkbox
               label="Auto draft"
               slider
@@ -255,29 +268,32 @@ const CreateScrimPool = (props) => {
               onChange={updateAutoBalance}
               defaultChecked={data.autoBalance}
             />
-          </Grid.Column>
-        </Grid.Row>
-        <Grid.Row>
-          <Header as="h2" icon textAlign="center">
-            <Header.Content>{`Total Members: ${data.members.length}`}</Header.Content>
-          </Header>
-        </Grid.Row>
-      </Grid>
-      <Grid columns={3}>
-        {data &&
-          data.members.length > 0 &&
-          data.members.map((member) => (
-            <Grid.Column key={member.id}>
-              <Member
-                canRemove
-                canUpdate
-                isLoading={loadingMembers.indexOf(member.id) !== -1}
-                onRemove={removeMember}
-                onUpdate={updateMember}
-                {...member}
-              />
-            </Grid.Column>
-          ))}
+          </Grid.Column> */}
+          </Grid.Row>
+          <Grid.Row>
+            <Header as="h2" icon textAlign="center">
+              <Header.Content>{`Total Members: ${data.members.length}`}</Header.Content>
+            </Header>
+          </Grid.Row>
+        </Grid>
+      </Container>
+      <Grid columns={7} centered>
+        {formatMembers().map((row) => (
+          <Grid.Row key={row.id}>
+            {row.members.map((member) => (
+              <Grid.Column key={member.id}>
+                <Member
+                  canRemove
+                  canUpdate
+                  isLoading={loadingMembers.indexOf(member.id) !== -1}
+                  onRemove={removeMember}
+                  onUpdate={updateMember}
+                  {...member}
+                />
+              </Grid.Column>
+            ))}
+          </Grid.Row>
+        ))}
         {data &&
           data.members &&
           loadingMembers
@@ -291,7 +307,7 @@ const CreateScrimPool = (props) => {
               </Grid.Column>
             ))}
       </Grid>
-    </Container>
+    </div>
   );
 };
 

@@ -173,6 +173,9 @@ const CreateScrim = () => {
       draftOrder,
     };
 
+    newData.teams = draftOrder.map((id) =>
+      newData.teams.find((t) => t.members[0].id === id)
+    );
     setData(newData);
     setCanContinue(true);
   };
@@ -222,6 +225,7 @@ const CreateScrim = () => {
           {data.step === "select-captains" && (
             <CreateScrimSelectCaptains
               members={data.pool}
+              teamSize={data.teamSize}
               onChange={updateSelectCaptains}
             />
           )}

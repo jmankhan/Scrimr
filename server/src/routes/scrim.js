@@ -137,6 +137,7 @@ router.patch('/:id', withAuth, async (req, res, next) => {
       message: 'Success',
     });
   } catch (err) {
+    console.log(err);
     res.status(500).json({
       message: 'An error occurred updating the scrim',
     });
