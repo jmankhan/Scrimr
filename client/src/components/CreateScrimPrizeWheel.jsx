@@ -58,7 +58,7 @@ const PrizeWheel = ({ disabled, sectors, onWinner }) => {
   const rotate = () => {
     const sector = getCurrentSector(sectors);
     ctx.canvas.style.transform = `rotate(${ang - Math.PI / 2}rad)`;
-    elSpin.textContent = !angVel ? "SPIN" : sector.label;
+    elSpin.textContent = disabled ? "DONE" : !angVel ? "SPIN" : sector.label;
     elSpin.style.background = sector.color;
   };
 
@@ -110,6 +110,9 @@ const PrizeWheel = ({ disabled, sectors, onWinner }) => {
       rotate();
       engine();
     }
+    if (disabled) {
+      canvas.classList.add("done");
+    }
 
     return () => {
       window.cancelAnimationFrame(requestRef.current);
@@ -151,6 +154,7 @@ const CreateScrimPrizeWheel = (props) => {
 
   const [winners, setWinners] = useState([]);
   const [captains, setCaptains] = useState(initialCaptains);
+  const [disabled, setDisabled] = useState(false);
 
   const handleWinner = (winnerId) => {
     const newWinners = [...winners, winnerId];
@@ -160,10 +164,12 @@ const CreateScrimPrizeWheel = (props) => {
     );
     if (remainingCaptains.length === 1) {
       newWinners.push(remainingCaptains[0].id);
+      setDisabled(true);
       props.onChange({ draftOrder: newWinners });
+    } else {
+      setCaptains(remainingCaptains);
     }
 
-    setCaptains(remainingCaptains);
     setWinners(newWinners);
   };
 
@@ -190,7 +196,7 @@ const CreateScrimPrizeWheel = (props) => {
       <Grid.Row>
         <Grid.Column width={12}>
           <PrizeWheel
-            disabled={captains.length <= 1}
+            disabled={disabled}
             sectors={captains}
             onWinner={handleWinner}
           />

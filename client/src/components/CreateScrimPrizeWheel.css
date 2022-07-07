@@ -6,6 +6,7 @@
 
 #wheel {
   display: block;
+  padding: 1rem;
 }
 
 #spin {
@@ -41,4 +42,8 @@
   position: absolute;
   top: 50%;
   left: 50%;
+}
+
+.done {
+  filter: blur(6px);
 }

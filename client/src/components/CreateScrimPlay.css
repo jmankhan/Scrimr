@@ -18,16 +18,38 @@
 }
 
 .team1 {
-  background-color: #E55F2F !important;
+  background-color: #E5342E !important;
 }
 
+/* .team1:after {
+  content: "";
+    display: block;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(ellipse at bottom, rgba(255, 255, 255, 0) 0%, #8C1A19 70%, #8C1A19 100%);
+    position: absolute;
+    top: 0;
+    left: 0; 
+} */
+
 .team1 div {
-  color: black;
+  color: white !important;
 }
 
 .team2 {
-    background-color: #2B26C1 !important;
+    background-color: #0598CC !important;
 }
+
+/* .team2:after {
+  content: "";
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(ellipse at bottom, rgba(255, 255, 255, 0) 0%, #145D88 70%, #145D88 100%);
+  position: absolute;
+  top: 0;
+  left: 0;
+} */
 
 .team2 div {
   color: white !important;
