@@ -31,6 +31,11 @@ class API {
     return response.data;
   };
 
+  static deleteMember = async (id) => {
+    const response = await client.delete(`/member/${id}`);
+    return response.data;
+  };
+
   static deleteTeamsForScrim = async (scrimId) => {
     const response = await client.delete(`/team?scrimId=${scrimId}`);
     return response.data;

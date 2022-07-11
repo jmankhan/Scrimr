@@ -10,21 +10,13 @@ import {
 } from "semantic-ui-react";
 import Member from "./Member";
 import "./CreateScrimPlay.css";
+import { chunkMembers } from "../utils";
 
 const CreateScrimPlay = (props) => {
   const [teamGroups, setTeamGroups] = useState([]);
 
   useEffect(() => {
-    setTeamGroups(
-      props.teams.reduce((result, team, index) => {
-        const chunkIdx = Math.floor(index / 2);
-        if (!result[chunkIdx]) {
-          result[chunkIdx] = { id: chunkIdx, teams: [] };
-        }
-        result[chunkIdx].teams.push(team);
-        return result;
-      }, [])
-    );
+    setTeamGroups(chunkMembers(props.teams, 2, "teams"));
   }, [props.teams]);
 
   let teams = [];

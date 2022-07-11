@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from "react";
-import PropTypes from "prop-types";
 import "./CreateScrimDraft.css";
 import {
   Button,
@@ -11,6 +10,7 @@ import {
   SegmentGroup,
 } from "semantic-ui-react";
 import Member from "./Member";
+import { chunkMembers } from "../utils";
 
 const CreateScrimDraft = (props) => {
   const [teams, setTeams] = useState([]);
@@ -25,13 +25,16 @@ const CreateScrimDraft = (props) => {
   }, [props.teams]);
 
   const getUnassignedMembers = () => {
-    return props.members.filter((member) => {
-      return !teams.reduce(
-        (a, e) =>
-          a || e.members.reduce((b, m) => b || m.id === member.id, false),
-        false
-      );
-    });
+    const assignedMemberIds = new Set(
+      teams
+        .map((team) => team.members)
+        .flat()
+        .map((member) => member.id)
+    );
+    return chunkMembers(
+      props.members.filter((member) => !assignedMemberIds.has(member.id)),
+      5
+    );
   };
 
   const addMember = (memberId) => {
@@ -67,59 +70,62 @@ const CreateScrimDraft = (props) => {
   };
 
   return (
-    <Container>
-      <Grid columns={teams.length}>
-        <Grid.Row>
-          {teams.length > 0 &&
-            teams.map((team, i) => (
-              <Grid.Column key={team.id}>
-                <SegmentGroup>
-                  <Segment inverted={captains[turn].id === team.members[0].id}>
-                    <Header style={{ textAlign: "center" }}>{team.name}</Header>
-                  </Segment>
-                  {team.members.map((member) => (
-                    <Member key={member.id} {...member} />
-                  ))}
-                  {new Array(props.teamSize - team.members.length)
-                    .fill(0)
-                    .map((e, i) => (
-                      <Segment key={i} secondary>
-                        <Header>&nbsp;</Header>
-                      </Segment>
+    <>
+      <Container>
+        <Grid columns={teams.length}>
+          <Grid.Row>
+            {teams.length > 0 &&
+              teams.map((team, i) => (
+                <Grid.Column key={team.id}>
+                  <SegmentGroup>
+                    <Segment
+                      inverted={captains[turn].id === team.members[0].id}
+                    >
+                      <Header style={{ textAlign: "center" }}>
+                        {team.name}
+                      </Header>
+                    </Segment>
+                    {team.members.map((member) => (
+                      <Member key={member.id} {...member} />
                     ))}
-                </SegmentGroup>
+                    {new Array(props.teamSize - team.members.length)
+                      .fill(0)
+                      .map((e, i) => (
+                        <Segment key={i} secondary>
+                          <Header>&nbsp;</Header>
+                        </Segment>
+                      ))}
+                  </SegmentGroup>
+                </Grid.Column>
+              ))}
+          </Grid.Row>
+        </Grid>
+
+        {getUnassignedMembers().length > 0 && (
+          <Header>{`${captains[turn].summoner.name}'s Turn`}</Header>
+        )}
+        <Button
+          icon="undo"
+          content="Undo"
+          style={{ marginTop: "1em" }}
+          disabled={sequence.length <= 0}
+          onClick={handleUndo}
+        />
+        <Divider section />
+      </Container>
+      <Grid columns={7} centered>
+        {getUnassignedMembers().map((row) => (
+          <Grid.Row key={row.id}>
+            {row.members.map((member) => (
+              <Grid.Column key={member.id}>
+                <Member {...member} canAdd onAdd={addMember} />
               </Grid.Column>
             ))}
-        </Grid.Row>
-      </Grid>
-
-      {getUnassignedMembers().length > 0 && (
-        <Header>{`${captains[turn].summoner.name}'s Turn`}</Header>
-      )}
-      <Button
-        icon="undo"
-        content="Undo"
-        style={{ marginTop: "1em" }}
-        disabled={sequence.length <= 0}
-        onClick={handleUndo}
-      />
-      <Divider section />
-
-      <Grid columns={3}>
-        {getUnassignedMembers().map((member) => (
-          <Grid.Column key={member.id}>
-            <Member {...member} canAdd onAdd={addMember} />
-          </Grid.Column>
+          </Grid.Row>
         ))}
       </Grid>
-    </Container>
+    </>
   );
-};
-
-CreateScrimDraft.propTypes = {
-  members: PropTypes.array,
-  draftFirst: PropTypes.number,
-  onChange: PropTypes.func,
 };
 
 export default CreateScrimDraft;

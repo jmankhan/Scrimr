@@ -14,6 +14,7 @@ import Member from "./Member";
 import API from "../api";
 import "./CreateScrimPool.css";
 import useRankImages from "../hooks/useRankImage";
+import { chunkMembers } from "../utils";
 
 const searchResultRenderer = ({ id, name, rank }) => {
   const [image, title] = useRankImages(rank);
@@ -76,16 +77,6 @@ const CreateScrimPool = (props) => {
       setIsSearchLoading(false);
     }
   };
-
-  //   useEffect(() => {
-  //     const delayDebounceFn = setTimeout(() => {
-  //       if (searchValue) {
-  //         handleSearch(searchValue);
-  //       }
-  //     }, 400);
-
-  //     return () => clearTimeout(delayDebounceFn);
-  //   }, [searchValue]);
 
   const handleMessageClear = () => {
     setMessage(null);
@@ -179,29 +170,24 @@ const CreateScrimPool = (props) => {
     props.onChange(newData);
   };
 
-  const removeMember = (id) => {
+  const removeMember = async (id) => {
     const newData = {
       ...data,
-      members: data.members.filter((member) => member.id !== id),
+      members: data.members.map((member) =>
+        member.id === id ? { ...member, isLoading: true } : member
+      ),
     };
     setData(newData);
 
-    props.onChange(newData);
-  };
-
-  const formatMembers = () => {
-    if (!data) {
-      return [];
+    try {
+      await API.deleteMember(id);
+    } catch (err) {
+      props.onError(err.response.data.message);
     }
 
-    return data.members.reduce((result, member, index) => {
-      const chunkIdx = Math.floor(index / 5);
-      if (!result[chunkIdx]) {
-        result[chunkIdx] = { id: chunkIdx, members: [] };
-      }
-      result[chunkIdx].members.push(member);
-      return result;
-    }, []);
+    newData.members = data.members.filter((member) => member.id !== id);
+    setData({ ...newData });
+    props.onChange(newData);
   };
 
   return (
@@ -278,7 +264,7 @@ const CreateScrimPool = (props) => {
         </Grid>
       </Container>
       <Grid columns={7} centered>
-        {formatMembers().map((row) => (
+        {chunkMembers(data.members, 5).map((row) => (
           <Grid.Row key={row.id}>
             {row.members.map((member) => (
               <Grid.Column key={member.id}>
