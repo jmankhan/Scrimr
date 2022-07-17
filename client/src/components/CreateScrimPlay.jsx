@@ -16,7 +16,12 @@ const CreateScrimPlay = (props) => {
   const [teamGroups, setTeamGroups] = useState([]);
 
   useEffect(() => {
-    setTeamGroups(chunkMembers(props.teams, 2, "teams"));
+    // sort each team in group in reverse draft order so that the team that picked last gets to play in "team 1" side by default
+    const groups = chunkMembers(props.teams, 2, "teams");
+    groups.forEach((group) => {
+      group.teams.sort((a, b) => (a.draftOrder < b.draftOrder ? 1 : -1));
+    });
+    setTeamGroups(groups);
   }, [props.teams]);
 
   let teams = [];
@@ -28,7 +33,7 @@ const CreateScrimPlay = (props) => {
       teams.push({
         id: i,
         name: `${members[i].summoner.name}'s Team`,
-        members: members.filter((member, index) => index % i === 0),
+        members: members.filter((_, index) => index % i === 0),
       });
     }
   } else if (props.autoDraft) {

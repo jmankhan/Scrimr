@@ -2,70 +2,93 @@
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
-    provider = "prisma-client-js"
+  provider = "prisma-client-js"
 }
 
 datasource db {
-    provider = "postgres"
-    url      = env("PG_URL")
+  provider = "postgres"
+  url      = env("PG_URL")
 }
 
 model Member {
-    id          Int       @id @default(autoincrement())
-    createdDate DateTime  @default(now())
-    team        Team?     @relation(fields: [teamId], references: [id])
-    teamId      Int?
-    summoner    Summoner? @relation(fields: [summonerId], references: [id])
-    summonerId  String?
-    scrim       Scrim?    @relation(fields: [scrimId], references: [id])
-    scrimId     Int?
+  id          Int       @id @default(autoincrement())
+  createdDate DateTime  @default(now())
+  team        Team?     @relation(fields: [teamId], references: [id])
+  teamId      Int?
+  summoner    Summoner? @relation(fields: [summonerId], references: [id])
+  summonerId  String?
+  scrim       Scrim?    @relation(fields: [scrimId], references: [id])
+  scrimId     Int?
 }
 
 model Team {
-    id      Int      @id @default(autoincrement())
-    name    String?
-    scrim   Scrim?   @relation(fields: [scrimId], references: [id])
-    scrimId Int?
-    members Member[]
+  id         Int      @id @default(autoincrement())
+  name       String?
+  scrim      Scrim?   @relation(fields: [scrimId], references: [id])
+  scrimId    Int?
+  members    Member[]
+  draftOrder Int?     @default(-1)
 }
 
 model Summoner {
-    id        String   @id
-    name      String
-    rank      Int
-    level     Int
-    icon      Int
-    isClaimed Boolean  @default(false)
-    members   Member[]
-    user      User?    @relation(fields: [userId], references: [id])
-    userId    Int?     @unique
+  id        String   @id
+  name      String
+  rank      Int
+  level     Int
+  icon      Int
+  isClaimed Boolean  @default(false)
+  members   Member[]
+  user      User?    @relation(fields: [userId], references: [id])
+  userId    Int?     @unique
 }
 
 model Scrim {
-    id          Int      @id @default(autoincrement())
-    autoDraft   Boolean  @default(false)
-    autoBalance Boolean  @default(false)
-    createdDate DateTime @default(now())
-    draftOrder  Int[]
-    host        User     @relation(fields: [hostId], references: [id])
-    hostId      Int
-    isPrivate   Boolean  @default(true)
-    pool        Member[]
-    sideOrder   String?
-    step        String   @default("pool")
-    teams       Team[]
-    teamSize    Int      @default(5)
+  id          Int      @id @default(autoincrement())
+  autoDraft   Boolean  @default(false)
+  autoBalance Boolean  @default(false)
+  createdDate DateTime @default(now())
+  host        User     @relation(fields: [hostId], references: [id])
+  hostId      Int
+  isPrivate   Boolean  @default(true)
+  pool        Member[]
+  sideOrder   String?
+  step        String   @default("pool")
+  teams       Team[]
+  teamSize    Int      @default(5)
 }
 
 model User {
-    id               Int       @id @default(autoincrement())
-    confirmationCode String?
-    email            String    @unique
-    password         String?
-    name             String?
-    summoner         Summoner?
-    scrims           Scrim[]
-    primaryRole      String?
-    secondaryRole    String?
-    verified         Boolean   @default(false)
+  id               Int              @id @default(autoincrement())
+  confirmationCode String?
+  email            String           @unique
+  password         String?
+  name             String?
+  summoner         Summoner?
+  scrims           Scrim[]
+  primaryRole      String?
+  secondaryRole    String?
+  verified         Boolean          @default(false)
+  roleAssignments  RoleAssignment[]
+}
+
+model Role {
+  id          Int              @id @default(autoincrement())
+  name        String           @unique
+  assignments RoleAssignment[]
+}
+
+model Permission {
+  id          Int              @id @default(autoincrement())
+  name        String           @unique
+  assignments RoleAssignment[]
+}
+
+model RoleAssignment {
+  id           Int        @id @default(autoincrement())
+  role         Role       @relation(fields: [roleId], references: [id])
+  roleId       Int
+  permission   Permission @relation(fields: [permissionId], references: [id])
+  permissionId Int
+  user         User       @relation(fields: [userId], references: [id])
+  userId       Int
 }

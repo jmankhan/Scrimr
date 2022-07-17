@@ -1,0 +1,31 @@
+continue should check state on load
+
+pool
+x    2 characters to search
+x    add 1 more column to each side of screen
+x    fix delete member
+?    fix loading member layout
+    add stats to members while in pool
+    win rate, position, rank, total games
+        filter by 
+        sort by
+
+select-captains
+x    replace middle button with +/x icons
+x    default randomize captains to floor(members/teamSize)
+
+prize-wheel
+x    minimum of two candidates at all times. change spinner when done?
+    skip animation button
+    reset instead of done, save results
+    subsequent spins are fast/early
+
+
+draft
+x    fix initial load failure
+x    fix draft order, just make it left to right
+x    center grid
+
+play
+?    design updates
+

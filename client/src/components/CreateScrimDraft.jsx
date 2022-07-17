@@ -16,12 +16,12 @@ const CreateScrimDraft = (props) => {
   const [teams, setTeams] = useState([]);
   const [turn, setTurn] = useState(0);
   const [sequence, setSequence] = useState([]);
-  const captains = props.draftOrder.map((captainId) =>
-    props.members.find((m) => m.id === captainId)
-  );
 
   useEffect(() => {
-    setTeams(props.teams);
+    // nulls and undefined last if teams are sorted this way
+    setTeams(
+      props.teams.sort((a, b) => (a.draftOrder < b.draftOrder ? -1 : 1))
+    );
   }, [props.teams]);
 
   const getUnassignedMembers = () => {
@@ -38,13 +38,13 @@ const CreateScrimDraft = (props) => {
   };
 
   const addMember = (memberId) => {
-    const team = teams.find((t) => t.members[0].id === captains[turn].id);
+    const team = teams[turn];
     team.members = [
       ...team.members,
       props.members.find((m) => m.id === memberId),
     ];
     setTeams([...teams]);
-    setTurn((turn + 1) % captains.length);
+    setTurn((turn + 1) % teams.length);
     setSequence([...sequence, { memberId, teamId: team.id }]);
 
     props.onChange(teams);
@@ -62,7 +62,7 @@ const CreateScrimDraft = (props) => {
     );
     setTeams([...teams]);
     const prevTurn =
-      (((turn - 1) % captains.length) + captains.length) % captains.length;
+      (((turn - 1) % teams.length) + teams.length) % teams.length;
     setTurn(prevTurn);
     setSequence([...sequence]);
 
@@ -71,59 +71,65 @@ const CreateScrimDraft = (props) => {
 
   return (
     <>
-      <Container>
-        <Grid columns={teams.length}>
-          <Grid.Row>
-            {teams.length > 0 &&
-              teams.map((team, i) => (
-                <Grid.Column key={team.id}>
-                  <SegmentGroup>
-                    <Segment
-                      inverted={captains[turn].id === team.members[0].id}
-                    >
-                      <Header style={{ textAlign: "center" }}>
-                        {team.name}
-                      </Header>
-                    </Segment>
-                    {team.members.map((member) => (
-                      <Member key={member.id} {...member} />
-                    ))}
-                    {new Array(props.teamSize - team.members.length)
-                      .fill(0)
-                      .map((e, i) => (
-                        <Segment key={i} secondary>
-                          <Header>&nbsp;</Header>
+      {teams && teams.length > 0 && (
+        <>
+          <Container>
+            <Grid columns={teams.length}>
+              <Grid.Row>
+                {teams.length > 0 &&
+                  teams.map((team, i) => (
+                    <Grid.Column key={team.id}>
+                      <SegmentGroup>
+                        <Segment
+                          inverted={
+                            teams[turn].members[0].id === team.members[0].id
+                          }
+                        >
+                          <Header style={{ textAlign: "center" }}>
+                            {team.name}
+                          </Header>
                         </Segment>
-                      ))}
-                  </SegmentGroup>
-                </Grid.Column>
-              ))}
-          </Grid.Row>
-        </Grid>
+                        {team.members.map((member) => (
+                          <Member key={member.id} {...member} />
+                        ))}
+                        {new Array(props.teamSize - team.members.length)
+                          .fill(0)
+                          .map((e, i) => (
+                            <Segment key={i} secondary>
+                              <Header>&nbsp;</Header>
+                            </Segment>
+                          ))}
+                      </SegmentGroup>
+                    </Grid.Column>
+                  ))}
+              </Grid.Row>
+            </Grid>
 
-        {getUnassignedMembers().length > 0 && (
-          <Header>{`${captains[turn].summoner.name}'s Turn`}</Header>
-        )}
-        <Button
-          icon="undo"
-          content="Undo"
-          style={{ marginTop: "1em" }}
-          disabled={sequence.length <= 0}
-          onClick={handleUndo}
-        />
-        <Divider section />
-      </Container>
-      <Grid columns={7} centered>
-        {getUnassignedMembers().map((row) => (
-          <Grid.Row key={row.id}>
-            {row.members.map((member) => (
-              <Grid.Column key={member.id}>
-                <Member {...member} canAdd onAdd={addMember} />
-              </Grid.Column>
+            {getUnassignedMembers().length > 0 && (
+              <Header>{`${teams[turn].members[0].summoner.name}'s Turn`}</Header>
+            )}
+            <Button
+              icon="undo"
+              content="Undo"
+              style={{ marginTop: "1em" }}
+              disabled={sequence.length <= 0}
+              onClick={handleUndo}
+            />
+            <Divider section />
+          </Container>
+          <Grid columns={7} centered>
+            {getUnassignedMembers().map((row) => (
+              <Grid.Row key={row.id}>
+                {row.members.map((member) => (
+                  <Grid.Column key={member.id}>
+                    <Member {...member} canAdd onAdd={addMember} />
+                  </Grid.Column>
+                ))}
+              </Grid.Row>
             ))}
-          </Grid.Row>
-        ))}
-      </Grid>
+          </Grid>
+        </>
+      )}
     </>
   );
 };

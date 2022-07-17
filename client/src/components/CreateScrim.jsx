@@ -168,14 +168,15 @@ const CreateScrim = () => {
   };
 
   const updatePrizewheel = ({ draftOrder }) => {
-    const newData = {
-      ...data,
-      draftOrder,
-    };
+    const newData = { ...data };
 
-    newData.teams = draftOrder.map((id) =>
-      newData.teams.find((t) => t.members[0].id === id)
-    );
+    newData.teams = draftOrder.map((id, i) => {
+      const team = newData.teams.find((t) => t.members[0].id === id);
+      return {
+        ...team,
+        draftOrder: i,
+      };
+    });
     setData(newData);
     setCanContinue(true);
   };
