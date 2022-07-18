@@ -1,5 +1,4 @@
 import express from 'express';
-import { checkSchema, validationResult } from 'express-validator';
 import p from '@prisma/client';
 
 const router = express.Router();
@@ -133,6 +132,46 @@ router.put('/:id', withAuth, async (req, res, next) => {
       },
     });
   } catch (err) {
+    res.status(500).json({ message: err });
+  }
+});
+
+router.patch('/', withAuth, async (req, res, next) => {
+  try {
+    // validate all members are in same scrim and if user is host of that scrim
+
+    const updates = [];
+    [...req.body.members].forEach((member) => {
+      const { team, summoner, scrim, ...rest } = member;
+      updates.push(
+        prisma.member.update({
+          where: {
+            id: Number(member.id),
+          },
+          data: {
+            ...rest,
+          },
+        })
+      );
+    });
+
+    const memberUpdates = await Promise.all(updates);
+    const members = await prisma.member.findMany({
+      where: {
+        id: {
+          in: memberUpdates.map((member) => member.id),
+        },
+      },
+      include: {
+        summoner: true,
+        team: true,
+        scrim: true,
+      },
+    });
+
+    res.json({ members });
+  } catch (err) {
+    console.log(err);
     res.status(500).json({ message: err });
   }
 });

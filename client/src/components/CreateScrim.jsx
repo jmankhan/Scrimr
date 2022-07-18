@@ -1,5 +1,13 @@
 import React, { useEffect, useState } from "react";
-import { Button, Icon, Loader, Menu, Step } from "semantic-ui-react";
+import {
+  Button,
+  Container,
+  Header,
+  Icon,
+  Loader,
+  Menu,
+  Step,
+} from "semantic-ui-react";
 import { NotificationManager } from "react-notifications";
 import { useParams, useNavigate } from "react-router-dom";
 import API from "../api";
@@ -8,64 +16,43 @@ import CreateScrimSelectCaptains from "./CreateScrimSelectCaptains";
 import CreateScrimPrizeWheel from "./CreateScrimPrizeWheel";
 import CreateScrimDraft from "./CreateScrimDraft";
 import CreateScrimPlay from "./CreateScrimPlay";
-
-const steps = [
-  {
-    name: "pool",
-    title: "Pool",
-    description: "Add candidate players",
-    icon: "list ul",
-    order: 1,
-  },
-  {
-    name: "select-captains",
-    title: "Select Captains",
-    description: "Choose who leads",
-    icon: "star outline",
-    order: 2,
-  },
-  {
-    name: "prize-wheel",
-    title: "Prize Wheel",
-    description: "Pray to the RNG gods",
-    icon: "compass outline",
-    order: 3,
-  },
-  {
-    name: "draft",
-    title: "Draft",
-    description: "Cull the weak",
-    icon: "user outline",
-    order: 4,
-  },
-  {
-    name: "play",
-    title: "Play",
-    description: "Start playing!",
-    icon: "gamepad",
-    order: 5,
-  },
-];
+import { steps } from "../utils/constants";
+import CreateScrimSpectator from "./CreateScrimSpectator";
+import useAuth from "../contexts/Auth";
 
 const CreateScrim = () => {
   const [data, setData] = useState();
   const [canContinue, setCanContinue] = useState(false);
+  const [canRequestAccess, setCanRequestAccess] = useState(false);
   const [loading, setLoading] = useState(false);
   const { id } = useParams();
   const navigate = useNavigate();
+  const auth = useAuth();
 
   useEffect(() => {
     const createScrim = async () => {
       setLoading(true);
-      const scrim = await API.createScrim();
-      setData(scrim);
-      navigate("" + scrim.id);
+      try {
+        const scrim = await API.createScrim();
+        setData(scrim);
+        navigate("" + scrim.id);
+      } catch (err) {
+        NotificationManager.error("Error", err.response.data.error, 5000);
+      }
     };
 
     const getScrim = async (id) => {
       setLoading(true);
-      const scrim = await API.getScrim(id);
-      setData(scrim);
+      try {
+        const scrim = await API.getScrim(id);
+        setData(scrim);
+      } catch (err) {
+        if (err.response.status === 401) {
+          setCanRequestAccess(true);
+        } else {
+          NotificationManager.error("Error", err.response.data.message, 5000);
+        }
+      }
     };
 
     try {
@@ -75,7 +62,7 @@ const CreateScrim = () => {
         getScrim(id);
       }
     } catch (err) {
-      NotificationManager.error("Error", err.response.data.error, 5000);
+      NotificationManager.error("Error", err.response.data.message, 5000);
     } finally {
       setLoading(false);
     }
@@ -157,8 +144,11 @@ const CreateScrim = () => {
           members: [captain],
           scrimId: data.id,
         }));
-      const response = await API.createTeams(teams);
-      newData.teams = response.teams;
+      const teamResponse = await API.createTeams(teams);
+      newData.teams = teamResponse.teams;
+
+      const memberResponse = await API.updateMembers(members);
+      newData.pool = memberResponse.members;
     } catch (err) {
       NotificationManager.error("Error", err.response.data.error, 5000);
     }
@@ -195,10 +185,39 @@ const CreateScrim = () => {
     NotificationManager.error(null, message, 5000);
   };
 
+  const isSpectator = () => {
+    return (
+      data &&
+      data.hostId !== auth.value.user.id &&
+      data.pool.find((member) => member.summoner?.userId === auth.value.user.id)
+    );
+  };
+
+  const isHost = () => {
+    return data && data.hostId === auth.value.user.id;
+  };
+
+  const handleRequestAccess = () => {
+    //websocket stuff here
+  };
+
   return (
     <div>
       {loading && <Loader />}
-      {!loading && data && (
+      {!loading && canRequestAccess && (
+        <Container style={{ marginTop: "3rem" }}>
+          <Header>Ask the host for access?</Header>
+          <Button
+            primary
+            content="Request Access"
+            onClick={handleRequestAccess}
+          />
+        </Container>
+      )}
+      {!loading && data && isSpectator() && (
+        <CreateScrimSpectator data={data} />
+      )}
+      {!loading && data && isHost() && (
         <div>
           <Step.Group widths={steps.length}>
             {steps.map((step) => (

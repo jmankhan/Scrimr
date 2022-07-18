@@ -117,9 +117,6 @@ router.get('/confirm', withAuth, async (req, res, next) => {
       },
     });
 
-    console.log(user.confirmationCode);
-    console.log(req.query.code);
-    console.log(user.confirmationCode === req.query.code);
     if (user.confirmationCode === req.query.code || user.verified) {
       await prisma.user.update({
         where: {

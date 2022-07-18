@@ -106,6 +106,11 @@ class API {
     return response.data;
   };
 
+  static updateMembers = async (members) => {
+    const response = await client.patch("/member/", { members });
+    return response.data;
+  };
+
   static updateScrim = async (scrim) => {
     const response = await client.patch(`/scrim/${scrim.id}`, scrim);
     return response.data;

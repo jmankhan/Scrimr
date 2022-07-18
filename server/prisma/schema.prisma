@@ -19,6 +19,7 @@ model Member {
   summonerId  String?
   scrim       Scrim?    @relation(fields: [scrimId], references: [id])
   scrimId     Int?
+  isCaptain   Boolean   @default(false)
 }
 
 model Team {

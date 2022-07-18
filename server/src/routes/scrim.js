@@ -4,7 +4,7 @@ import p from '@prisma/client';
 const router = express.Router();
 const prisma = new p.PrismaClient();
 import withAuth from '../middlewares/auth.js';
-import { validateHost } from '../utils/validators.js';
+import { validateHost, validateScrim } from '../utils/validators.js';
 
 router.get('/', withAuth, async (req, res, next) => {
   try {
@@ -70,8 +70,9 @@ router.post('/', withAuth, async (req, res, next) => {
 router.get('/:id', withAuth, async (req, res, next) => {
   try {
     const scrimId = req.params.id;
-    if (!validateHost(req.userId, scrimId)) {
-      res.status(401);
+    const canViewScrim = await validateScrim(req.userId, scrimId);
+    if (!canViewScrim) {
+      res.status(401).json({ message: 'Unauthorized' });
     }
 
     const record = await prisma.scrim.findUnique({
@@ -97,7 +98,6 @@ router.get('/:id', withAuth, async (req, res, next) => {
     if (!record) {
       res.statusCode(404);
     }
-
     res.json(record);
   } catch (err) {
     res.status(500).json({ message: err });
