@@ -19,7 +19,7 @@ import { memberRouter, scrimRouter, searchRouter, summonerRouter, teamRouter, us
 var app = express();
 
 if (process.env.NODE_ENV !== 'dev') {
-  app.use(enforce.HTTPS({ trustProtoHeader: true });
+  app.use(enforce.HTTPS({ trustProtoHeader: true }));
   app.use(express.static(path.join(__dirname, '..', '..', 'client', 'build')));
 }
 logger.token('body', (req) => {
