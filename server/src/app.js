@@ -18,6 +18,10 @@ import { memberRouter, scrimRouter, searchRouter, summonerRouter, teamRouter, us
 
 var app = express();
 
+if (process.env.NODE_ENV !== 'dev') {
+  app.use(enforce.HTTPS({ trustProtoHeader: true });
+  app.use(express.static(path.join(__dirname, '..', '..', 'client', 'build')));
+}
 logger.token('body', (req) => {
   return JSON.stringify(req.body);
 });
@@ -45,10 +49,6 @@ app.use(function (req, res, next) {
   res.setHeader('Access-Control-Allow-Credentials', true);
   next();
 });
-if (process.env.NODE_ENV !== 'dev') {
-  app.use(express.static(path.join(__dirname, '..', '..', 'client', 'build')));
-  app.use(enforce.HTTPS({ trustProtoHeader: process.env.NODE_ENV !== 'dev' }));
-}
 
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 app.use('/api/member/', memberRouter);
