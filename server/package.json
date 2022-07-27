@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "start": "node ./bin/www",
+    "start": "node --experimental-specifier-resolution=node ./bin/www",
     "dev": "nodemon --watch './src/**/*.js' --exec \"node --experimental-specifier-resolution=node\" ./bin/www",
     "debug": "PORT=3001 node --inspect ./bin/www"
   },
