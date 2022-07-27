@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "npm start --prefix server",
+    "start": "npm start --prefix server --experimental-specifier-resolution=node",
     "install-client": "cd client && npm install && npm run build && cd ..",
     "install-server": "cd server && npm install && cd ..",
     "migrate-db": "cd server && npx prisma migrate deploy && cd ..",
