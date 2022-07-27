@@ -1,12 +1,10 @@
 import express from 'express';
 import p from '@prisma/client';
-
-const router = express.Router();
 const prisma = new p.PrismaClient();
 
-import AuthService from '../services/auth.service.js';
+const router = express.Router();
+import { AuthService, SummonerService } from '../services';
 import withAuth from '../middlewares/auth.js';
-import SummonerService from '../services/summoner.service.js';
 
 router.post('/', withAuth, async (req, res, next) => {
   try {

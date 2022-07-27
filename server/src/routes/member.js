@@ -5,8 +5,7 @@ const router = express.Router();
 const prisma = new p.PrismaClient();
 
 import withAuth from '../middlewares/auth.js';
-import SummonerService from '../services/summoner.service.js';
-import { validateHost } from '../utils/validators.js';
+import { SummonerService } from '../services/';
 
 router.get('/', async (req, res, next) => {
   const records = await prisma.member.findMany();

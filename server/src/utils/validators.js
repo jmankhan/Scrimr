@@ -30,7 +30,6 @@ export const validateScrim = async (userId, scrimId) => {
   } else if (scrim.pool) {
     const member = scrim.pool.find((member) => member.summoner?.userId === userId);
     const memberInPool = member != null;
-    console.log('memberInPool ' + memberInPool);
     return memberInPool;
   } else {
     console.log('is not authorized');

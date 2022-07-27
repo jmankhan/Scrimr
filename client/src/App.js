@@ -3,6 +3,7 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import "./App.css";
 import { NotificationContainer } from "react-notifications";
 import useAuth, { AuthProvider } from "./contexts/Auth";
+import { SocketContext, socket } from "./contexts/Socket";
 import CreateScrim from "./components/CreateScrim";
 import Home from "./components/Home";
 import NavBar from "./components/Navbar";
@@ -38,63 +39,59 @@ function App() {
 
   return (
     <div className="App">
-      <NotificationContainer
-        style={{
-          display: "block !important",
-          marginLeft: "auto",
-          marginRight: "auto",
-        }}
-      />
+      <NotificationContainer />
       {!loading && (
         <AuthProvider initialUser={initialUser}>
-          <NavBar>
-            <Routes>
-              <Route path="/" element={<Home />}></Route>
-              <Route path="/login" element={<LoginForm />}></Route>
-              <Route path="/register" element={<RegistrationForm />}></Route>
-              <Route
-                path="/logout"
-                element={
-                  <PrivateRoute redirectTo="/">
-                    <Logout />
-                  </PrivateRoute>
-                }
-              />
-              <Route
-                path="/profile"
-                element={
-                  <PrivateRoute>
-                    <Profile />
-                  </PrivateRoute>
-                }
-              />
-              <Route
-                path="/confirm"
-                element={
-                  <PrivateRoute>
-                    <ConfirmCode />
-                  </PrivateRoute>
-                }
-              />
-              <Route path="/in-house" element={<InHouseLanding />} />
-              <Route
-                path="/in-house/create-scrim"
-                element={
-                  <PrivateRoute>
-                    <CreateScrim />
-                  </PrivateRoute>
-                }
-              />
-              <Route
-                path="/in-house/create-scrim/:id"
-                element={
-                  <PrivateRoute>
-                    <CreateScrim />
-                  </PrivateRoute>
-                }
-              />
-            </Routes>
-          </NavBar>
+          <SocketContext.Provider value={socket}>
+            <NavBar>
+              <Routes>
+                <Route path="/" element={<Home />}></Route>
+                <Route path="/login" element={<LoginForm />}></Route>
+                <Route path="/register" element={<RegistrationForm />}></Route>
+                <Route
+                  path="/logout"
+                  element={
+                    <PrivateRoute redirectTo="/">
+                      <Logout />
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="/profile"
+                  element={
+                    <PrivateRoute>
+                      <Profile />
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="/confirm"
+                  element={
+                    <PrivateRoute>
+                      <ConfirmCode />
+                    </PrivateRoute>
+                  }
+                />
+                <Route path="/in-house" element={<InHouseLanding />} />
+                <Route
+                  path="/in-house/create-scrim"
+                  element={
+                    <PrivateRoute>
+                      <CreateScrim />
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="/in-house/create-scrim/:id"
+                  element={
+                    <PrivateRoute>
+                      <CreateScrim />
+                    </PrivateRoute>
+                  }
+                />
+              </Routes>
+            </NavBar>
+          </SocketContext.Provider>
         </AuthProvider>
       )}
     </div>

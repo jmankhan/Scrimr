@@ -5,6 +5,8 @@ const router = express.Router();
 const prisma = new p.PrismaClient();
 import withAuth from '../middlewares/auth.js';
 import { validateHost, validateScrim } from '../utils/validators.js';
+import { SCRIMREQUEST_TYPES, SOCKET_EVENTS } from '../utils/constants.js';
+import { notifyUser, queryScrim } from '../services';
 
 router.get('/', withAuth, async (req, res, next) => {
   try {
@@ -67,38 +69,41 @@ router.post('/', withAuth, async (req, res, next) => {
   }
 });
 
+router.post('/:id/join', withAuth, async (req, res, next) => {
+  try {
+    const scrimId = req.params.id;
+    const userId = req.userId;
+
+    await prisma.ScrimRequest.create({
+      data: {
+        scrimId: Number(scrimId),
+        userId: Number(userId),
+        type: SCRIMREQUEST_TYPES.MEMBER_JOIN,
+      },
+    });
+
+    const scrim = await queryScrim(scrimId);
+    await notifyUser(req, SOCKET_EVENTS.JOIN_SCRIM, scrim);
+  } catch (err) {
+    res.status(500).json({
+      message: 'An error occurred making the request',
+    });
+  }
+});
+
 router.get('/:id', withAuth, async (req, res, next) => {
   try {
     const scrimId = req.params.id;
     const canViewScrim = await validateScrim(req.userId, scrimId);
     if (!canViewScrim) {
       res.status(401).json({ message: 'Unauthorized' });
+    } else {
+      const record = await queryScrim(scrimId);
+      if (!record) {
+        res.statusCode(404);
+      }
+      res.json(record);
     }
-
-    const record = await prisma.scrim.findUnique({
-      where: { id: Number(scrimId) },
-      include: {
-        pool: {
-          include: {
-            summoner: true,
-          },
-        },
-        teams: {
-          include: {
-            members: {
-              include: {
-                summoner: true,
-              },
-            },
-          },
-        },
-      },
-    });
-
-    if (!record) {
-      res.statusCode(404);
-    }
-    res.json(record);
   } catch (err) {
     res.status(500).json({ message: err });
   }
@@ -132,6 +137,8 @@ router.patch('/:id', withAuth, async (req, res, next) => {
         },
       },
     });
+
+    await notifyUser(req, SOCKET_EVENTS.GET_SCRIM, await queryScrim(scrimId));
 
     res.status(200).json({
       message: 'Success',

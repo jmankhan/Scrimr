@@ -21,6 +21,11 @@ class API {
     return response.data;
   };
 
+  static createRequest = async (scrimId) => {
+    const response = await client.post(`/scrim/${scrimId}/join`);
+    return response.data;
+  };
+
   static createScrim = async () => {
     const response = await client.post("/scrim", {});
     return response.data;

@@ -1,9 +1,10 @@
 import express from 'express';
 const router = express.Router();
-import AuthService from '../services/auth.service.js';
 import withAuth from '../middlewares/auth.js';
-import p from '@prisma/client';
 import { sendEmail } from '../utils/email.js';
+import { AuthService, getUser } from '../services';
+
+import p from '@prisma/client';
 const prisma = new p.PrismaClient();
 
 router.get('/profile', withAuth, async function (req, res) {
@@ -88,15 +89,8 @@ router.post('/login', async function (req, res, next) {
 
 router.get('/me', withAuth, async function (req, res, next) {
   try {
-    const userId = req.userId;
-    const user = await prisma.user.findUnique({
-      where: {
-        id: userId,
-      },
-      include: {
-        summoner: true,
-      },
-    });
+    const id = req.userId;
+    const user = await getUser(id);
 
     res.json({ user });
   } catch (err) {

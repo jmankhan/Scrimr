@@ -35,3 +35,8 @@ export const steps = [
     order: 5,
   },
 ];
+
+export const SOCKET_EVENTS = Object.freeze({
+  JOIN_SCRIM: "JOIN_SCRIM",
+  GET_SCRIM: "GET_SCRIM",
+});

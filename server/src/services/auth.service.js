@@ -4,9 +4,9 @@ const prisma = new p.PrismaClient();
 import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
 import jwt from '../utils/jwt.js';
-import SummonerService from './summoner.service.js';
+import { SummonerService } from './';
 
-class AuthService {
+export class AuthService {
   static async register(data) {
     const { email, password, summonerName } = data;
     const existingUser = await prisma.user.findUnique({
@@ -92,5 +92,3 @@ class AuthService {
     return result.payload;
   }
 }
-
-export default AuthService;

@@ -2,7 +2,7 @@ import twisted from 'twisted';
 import riotUtils from '../utils/riot.js';
 const riotApi = new twisted.LolApi();
 
-class SummonerService {
+export class SummonerService {
   static async getSummonerByName(name) {
     try {
       const summonerResponse = await riotApi.Summoner.getByName(name, twisted.Constants.Regions.AMERICA_NORTH);
@@ -46,5 +46,3 @@ class SummonerService {
     return summoner;
   }
 }
-
-export default SummonerService;

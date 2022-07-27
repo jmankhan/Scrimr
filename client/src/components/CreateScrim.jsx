@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import {
   Button,
   Container,
@@ -19,12 +19,17 @@ import CreateScrimPlay from "./CreateScrimPlay";
 import { steps } from "../utils/constants";
 import CreateScrimSpectator from "./CreateScrimSpectator";
 import useAuth from "../contexts/Auth";
+import { SocketContext } from "../contexts/Socket";
+import { SOCKET_EVENTS } from "../utils/constants";
 
 const CreateScrim = () => {
   const [data, setData] = useState();
   const [canContinue, setCanContinue] = useState(false);
   const [canRequestAccess, setCanRequestAccess] = useState(false);
   const [loading, setLoading] = useState(false);
+  const socket = useContext(SocketContext);
+  const [isSocketConnected, setIsSocketConnected] = useState(socket.connected);
+
   const { id } = useParams();
   const navigate = useNavigate();
   const auth = useAuth();
@@ -66,6 +71,59 @@ const CreateScrim = () => {
     } finally {
       setLoading(false);
     }
+
+    socket.on("connect", () => {
+      console.log("connect");
+      setIsSocketConnected(true);
+    });
+
+    socket.on("disconnect", () => {
+      console.log("disconnect");
+      setIsSocketConnected(false);
+    });
+
+    socket.on(id, (data) => {
+      if (data[SOCKET_EVENTS.GET_SCRIM]) {
+        const payload = data[SOCKET_EVENTS.GET_SCRIM];
+        setData(payload.scrim);
+      }
+    });
+
+    socket.on(auth.value.user.id, (data) => {
+      if (data[SOCKET_EVENTS.JOIN_SCRIM]) {
+        const payload = data[SOCKET_EVENTS.JOIN_SCRIM];
+        NotificationManager.success(
+          "Join Request",
+          <div>
+            `${payload.request.user.summoner.name} is asking to join this scrim`
+            <Button
+              icon="checkmark"
+              onClick={async () => {
+                const summonerId = payload.request.user.summonerId;
+                const scrimId = data.id;
+
+                try {
+                  setLoading(true);
+                  await API.createMember(summonerId, scrimId);
+                } catch (err) {
+                  NotificationManager.error("Error", err.message, 5000);
+                } finally {
+                  setLoading(false);
+                }
+              }}
+            />
+            <Button icon="close" onClick={() => {}} />
+          </div>
+        );
+      }
+    });
+
+    return () => {
+      socket.off("connect");
+      socket.off("disconnect");
+      socket.off(auth.value.user.id);
+      socket.off(id);
+    };
   }, []);
 
   const handleContinue = async () => {
@@ -197,8 +255,12 @@ const CreateScrim = () => {
     return data && data.hostId === auth.value.user.id;
   };
 
-  const handleRequestAccess = () => {
-    //websocket stuff here
+  const handleRequestAccess = async () => {
+    try {
+      await API.createRequest(id);
+    } catch (err) {
+      NotificationManager.error("Error", err.message, 5000);
+    }
   };
 
   return (

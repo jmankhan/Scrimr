@@ -10,6 +10,7 @@ import enforce from 'express-sslify';
 import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+import { Server } from 'socket.io';
 import YAML from 'yamljs';
 import swaggerUi from 'swagger-ui-express';
 const swaggerDocument = YAML.load('./swagger.yaml');

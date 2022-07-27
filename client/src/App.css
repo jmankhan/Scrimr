@@ -37,11 +37,11 @@
   }
 }
 
-.notification-container {
+/* .notification-container {
   top: 20px;
   left: 50%;
   margin-left: -160px;
-}
+} */
 
 .notification-enter {
   visibility: hidden;
