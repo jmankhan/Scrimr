@@ -10,6 +10,7 @@ debug('server:server');
 import http from 'http';
 import jwt from '../src/utils/jwt.js';
 import { Server } from 'socket.io';
+import { instrument } from '@socket.io/admin-ui';
 
 /**
  * Get port from environment and store in Express.
@@ -91,8 +92,10 @@ function onListening() {
 // create websocket server on top of http server
 const io = new Server(server, {
   cors: {
+    origin: ['https://admin.socket.io', 'http://localhost:3000'],
     credentials: true,
   },
+  origins: '*',
 });
 io.use(async (socket, next) => {
   const cookie = socket.handshake.headers.cookie;
@@ -115,14 +118,10 @@ io.use(async (socket, next) => {
 });
 
 io.on('connection', (socket) => {
-  app.set('socket', socket);
   if (socket.userId) {
     const message = `user ${socket.userId} joined`;
     console.log('message: ' + message);
     socket.join(socket.userId);
-    socket.emit('joined', message, (response) => {
-      console.log(response);
-    });
   }
 
   socket.on('disconnect', () => {
@@ -135,4 +134,9 @@ io.on('connection', (socket) => {
       socket.disconnect();
     }
   });
+
+  instrument(io, {
+    auth: false,
+  });
 });
+app.set('io', io);

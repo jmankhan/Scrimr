@@ -1,3 +1,4 @@
+import createHttpError from 'http-errors';
 import twisted from 'twisted';
 import riotUtils from '../utils/riot.js';
 const riotApi = new twisted.LolApi();
@@ -5,20 +6,19 @@ const riotApi = new twisted.LolApi();
 export class SummonerService {
   static async getSummonerByName(name) {
     try {
-      const summonerResponse = await riotApi.Summoner.getByName(name, twisted.Constants.Regions.AMERICA_NORTH);
-      return SummonerService.getSummonerByResponse(summonerResponse.response);
+      const riotResponse = await riotApi.Summoner.getByName(name, twisted.Constants.Regions.AMERICA_NORTH).catch(next);
+      return SummonerService.getSummonerByResponse(riotResponse.response);
     } catch (err) {
-      console.log('could not find summoner ' + name);
-      throw Error('Summoner not found');
+      throw new createHttpError.NotFound();
     }
   }
 
   static async getSummonerById(id) {
-    const summonerResponse = await riotApi.Summoner.getById(id, twisted.Constants.Regions.AMERICA_NORTH);
-    if (summonerResponse.response) {
-      return SummonerService.getSummonerByResponse(summonerResponse.response);
+    const riotResponse = await riotApi.Summoner.getById(id, twisted.Constants.Regions.AMERICA_NORTH).catch(next);
+    if (riotResponse.response) {
+      return SummonerService.getSummonerByResponse(riotResponse.response);
     } else {
-      throw Error('Summoner not found');
+      throw new createHttpError.NotFound();
     }
   }
 
@@ -32,15 +32,15 @@ export class SummonerService {
       rank: -1,
     };
 
-    const leagueDataResponse = await riotApi.League.bySummoner(id, twisted.Constants.Regions.AMERICA_NORTH);
-    if (leagueDataResponse) {
-      const leagues = leagueDataResponse.response;
+    const riotResponse = await riotApi.League.bySummoner(id, twisted.Constants.Regions.AMERICA_NORTH).catch(next);
+    if (riotResponse) {
+      const leagues = riotResponse.response;
       const rankedSolo = leagues.find((l) => l.queueType === 'RANKED_SOLO_5x5');
       if (rankedSolo) {
         summoner.rank = riotUtils.getRank(rankedSolo.tier, rankedSolo.rank);
       }
     } else {
-      throw Error('League data not found');
+      throw new createHttpError.NotFound();
     }
 
     return summoner;

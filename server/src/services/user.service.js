@@ -1,7 +1,6 @@
-import p from '@prisma/client';
-const prisma = new p.PrismaClient();
+import prisma from '../utils/prisma.js';
 
-export const getUser = (id) => {
+export const queryUser = (id) => {
   return prisma.user.findUnique({
     where: {
       id: Number(id),

@@ -45,12 +45,11 @@ model Summoner {
 
 model Scrim {
   id          Int            @id @default(autoincrement())
-  autoDraft   Boolean        @default(false)
-  autoBalance Boolean        @default(false)
   createdDate DateTime       @default(now())
   host        User           @relation(fields: [hostId], references: [id])
   hostId      Int
   isPrivate   Boolean        @default(true)
+  mode        String         @default("manual")
   pool        Member[]
   sideOrder   String?
   step        String         @default("pool")
@@ -100,6 +99,7 @@ model ScrimRequest {
   id      Int    @id @default(autoincrement())
   scrim   Scrim  @relation(fields: [scrimId], references: [id])
   scrimId Int
+  status  String
   type    String
   user    User?  @relation(fields: [userId], references: [id])
   userId  Int?

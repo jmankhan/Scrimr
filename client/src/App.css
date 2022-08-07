@@ -47,3 +47,9 @@
   visibility: hidden;
   transform: translate3d(0, -100%, 0);
 }
+.notification-add {
+  background-color: #51a351;
+  padding-left: 1rem;
+  padding-bottom: 2rem;
+  padding-top: 2rem;
+}

@@ -1,7 +1,8 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useContext, useEffect, useRef, useState } from "react";
 import { useHotkeys } from "react-hotkeys-hook";
 import {
   Container,
+  Dropdown,
   Form,
   Grid,
   Header,
@@ -10,11 +11,21 @@ import {
   Message,
   Search,
 } from "semantic-ui-react";
+import { NotificationManager } from "react-notifications";
 import Member from "./Member";
 import API from "../api";
 import "./CreateScrimPool.css";
 import useRankImages from "../hooks/useRankImage";
 import { chunkMembers } from "../utils";
+import {
+  defaultScrimMode,
+  scrimModeOptions,
+  SCRIMREQUEST_STATUS,
+  SOCKET_EVENTS,
+} from "../utils/constants";
+import JoinRequest from "./JoinRequest";
+import { SocketContext } from "../contexts/Socket";
+import useAuth from "../contexts/Auth";
 
 const searchResultRenderer = ({ id, name, rank }) => {
   const [image, title] = useRankImages(rank);
@@ -28,21 +39,14 @@ const searchResultRenderer = ({ id, name, rank }) => {
 };
 
 const CreateScrimPool = (props) => {
-  const initialState = {
-    id: 0,
-    name: "Pool 0",
-    members: props.members,
-    teamSize: props.teamSize,
-    autoDraft: false,
-    autoBalance: false,
-  };
-
-  const [data, setData] = useState(initialState);
+  const [data, setData] = useState({ ...props });
   const [searchResults, setSearchResults] = useState([]);
   const [searchValue, setSearchValue] = useState("");
   const [isSearchLoading, setIsSearchLoading] = useState(false);
   const [message, setMessage] = useState();
   const [loadingMembers, setLoadingMembers] = useState([]);
+  const auth = useAuth();
+  const socket = useContext(SocketContext);
   const searchRef = useRef();
 
   useHotkeys("ctrl+k, command+k", () => {
@@ -54,12 +58,96 @@ const CreateScrimPool = (props) => {
   useEffect(() => {
     setData({
       ...data,
+      id: props.scrimId,
       members: props.members,
       teamSize: props.teamSize,
-      autoDraft: props.autoDraft,
-      autoBalance: props.autoBalance,
+      mode: props.mode,
     });
-  }, [props.pool, props.autoDraft, props.autoBalance]);
+  }, [props]);
+
+  useEffect(() => {
+    const scrimId = props.scrimId;
+    const userId = auth?.value.user.id;
+
+    if (scrimId) {
+      socket.on(scrimId, (data) => {
+        if (data[SOCKET_EVENTS.GET_SCRIM]) {
+          const payload = data[SOCKET_EVENTS.GET_SCRIM];
+          setData(payload.scrim);
+        }
+      });
+    }
+
+    if (userId && scrimId) {
+      socket.on(userId, async (response) => {
+        if (response[SOCKET_EVENTS.JOIN_SCRIM]) {
+          const payload = response[SOCKET_EVENTS.JOIN_SCRIM];
+          NotificationManager.create({
+            type: "add",
+            title: null,
+            timeOut: 60 * 1000,
+            message: (
+              <JoinRequest
+                user={payload.request.user}
+                onClick={async () => {
+                  const summonerId = payload.request.user.summoner?.id;
+                  const scrimId = props.scrimId;
+                  const requestId = payload.request.id;
+                  let newMember;
+                  try {
+                    newMember = await API.createMember(summonerId, scrimId);
+                    setLoadingMembers([...loadingMembers, newMember.member.id]);
+                    const scrimData = await API.getScrim(scrimId);
+                    await API.updateScrimRequest(
+                      requestId,
+                      SCRIMREQUEST_STATUS.APPROVE
+                    );
+
+                    const newData = { ...scrimData, members: scrimData.pool };
+                    setData(newData);
+                    props.onChange(newData);
+                  } catch (err) {
+                    NotificationManager.error("Error", err.message, 5000);
+                  } finally {
+                    setLoadingMembers(
+                      loadingMembers.filter(
+                        (member) => member.id !== newMember.id
+                      )
+                    );
+                  }
+                }}
+                onClose={async () => {
+                  const requestId = payload.request.id;
+
+                  try {
+                    await API.updateScrimRequest(
+                      requestId,
+                      SCRIMREQUEST_STATUS.DENY
+                    );
+                    const scrimData = await API.getScrim(data.id);
+                    const newData = { ...scrimData, members: scrimData.pool };
+                    setData(newData);
+                    props.onChange(newData);
+                  } catch (err) {
+                    NotificationManager.error("Error", err.message, 5000);
+                  }
+                }}
+              />
+            ),
+          });
+        }
+      });
+    }
+
+    return () => {
+      if (scrimId) {
+        socket.off(scrimId);
+      }
+      if (userId) {
+        socket.off(userId);
+      }
+    };
+  }, [props.scrimId]);
 
   const handleSearch = async (value) => {
     setSearchValue(value);
@@ -92,22 +180,11 @@ const CreateScrimPool = (props) => {
     props.onChange(newData);
   };
 
-  const updateAutoDraft = (e, eventData) => {
+  const handleModeUpdate = (data) => {
     const newData = {
       ...data,
-      autoDraft: eventData.checked,
+      mode: data.value,
     };
-    setData(newData);
-
-    props.onChange(newData);
-  };
-
-  const updateAutoBalance = (e, eventData) => {
-    const newData = {
-      ...data,
-      autoBalance: eventData.checked,
-    };
-    setData(newData);
 
     props.onChange(newData);
   };
@@ -125,7 +202,7 @@ const CreateScrimPool = (props) => {
       newData.members[memberIndex] = updatedMemberResponse.member;
       setData(newData);
     } catch (err) {
-      props.onError(err.response.data.error);
+      NotificationManager.error("Error", err.message);
     } finally {
       setLoadingMembers(loadingMembers.filter((loadingId) => loadingId !== id));
     }
@@ -138,7 +215,10 @@ const CreateScrimPool = (props) => {
         : eventData.result.id;
 
     if (data.members.find((member) => member.id === resultId) != null) {
-      props.onError(`${eventData.result.name} is already in the pool`);
+      NotificationManager.error(
+        "Error",
+        `${eventData.result.name} is already in the pool`
+      );
       return;
     }
 
@@ -151,7 +231,7 @@ const CreateScrimPool = (props) => {
       } = await API.createMember(summoner.id, props.scrimId);
       memberResponse = await API.getMember(id);
     } catch (err) {
-      props.onError(err.response.data.message);
+      NotificationManager.error(err.message);
     } finally {
       setSearchValue("");
       setSearchResults([]);
@@ -182,7 +262,7 @@ const CreateScrimPool = (props) => {
     try {
       await API.deleteMember(id);
     } catch (err) {
-      props.onError(err.response.data.message);
+      NotificationManager.error("Error", err.message);
     }
 
     newData.members = data.members.filter((member) => member.id !== id);
@@ -225,7 +305,7 @@ const CreateScrimPool = (props) => {
           </Grid.Row>
         </Grid>
 
-        <Grid centered columns={1}>
+        <Grid centered columns={2}>
           <Grid.Row>
             <Grid.Column>
               <Input
@@ -235,51 +315,58 @@ const CreateScrimPool = (props) => {
                 min={1}
                 max={10}
                 step={1}
-                defaultValue={data.teamSize || 5}
+                defaultValue={data?.teamSize || 5}
                 onChange={updateTeamSize}
               />
             </Grid.Column>
-            {/* <Grid.Column>
-            <Checkbox
-              label="Auto draft"
-              slider
-              onChange={updateAutoDraft}
-              defaultChecked={data.autoDraft}
-            />
-          </Grid.Column>
-          <Grid.Column>
-            <Checkbox
-              label="Auto balance"
-              slider
-              onChange={updateAutoBalance}
-              defaultChecked={data.autoBalance}
-            />
-          </Grid.Column> */}
+            <Grid.Column>
+              <Input
+                fluid
+                label="Mode"
+                input={
+                  <Dropdown
+                    defaultValue={defaultScrimMode}
+                    onChange={(e, data) => handleModeUpdate(data)}
+                    options={scrimModeOptions}
+                    selection
+                    style={{
+                      borderRadius: "0 4px 4px 0",
+                    }}
+                    value={data.mode}
+                  />
+                }
+              />
+            </Grid.Column>
           </Grid.Row>
           <Grid.Row>
             <Header as="h2" icon textAlign="center">
-              <Header.Content>{`Total Members: ${data.members.length}`}</Header.Content>
+              <Header.Content>{`Total Members: ${
+                data?.members.length ?? 0
+              }`}</Header.Content>
             </Header>
           </Grid.Row>
         </Grid>
       </Container>
       <Grid columns={7} centered>
-        {chunkMembers(data.members, 5).map((row) => (
-          <Grid.Row key={row.id}>
-            {row.members.map((member) => (
-              <Grid.Column key={member.id}>
-                <Member
-                  canRemove
-                  canUpdate
-                  isLoading={loadingMembers.indexOf(member.id) !== -1}
-                  onRemove={removeMember}
-                  onUpdate={updateMember}
-                  {...member}
-                />
-              </Grid.Column>
-            ))}
-          </Grid.Row>
-        ))}
+        {data &&
+          data.members &&
+          data.members.length > 0 &&
+          chunkMembers(data.members, 5).map((row) => (
+            <Grid.Row key={row.id}>
+              {row.members.map((member) => (
+                <Grid.Column key={member.id}>
+                  <Member
+                    canRemove
+                    canUpdate
+                    isLoading={loadingMembers.indexOf(member.id) !== -1}
+                    onRemove={removeMember}
+                    onUpdate={updateMember}
+                    {...member}
+                  />
+                </Grid.Column>
+              ))}
+            </Grid.Row>
+          ))}
         {data &&
           data.members &&
           loadingMembers

@@ -4,165 +4,112 @@ import p from '@prisma/client';
 const router = express.Router();
 const prisma = new p.PrismaClient();
 import withAuth from '../middlewares/auth.js';
+import { validateHost, validateTeamMember } from '../utils/validators.js';
+import createHttpError from 'http-errors';
+import { queryTeam, queryTeams } from '../services/team.service.js';
 
 router.get('/:id', withAuth, async (req, res, next) => {
-  try {
-    const team = await prisma.team.findUnique({
-      where: {
-        id: Number(req.params.id),
-      },
-    });
+  const teamId = req.params.id;
+  const userId = req.userId;
 
-    res.status(200).json({
-      team,
-    });
-  } catch (err) {
-    res.statusCode(404);
+  if (!validateTeamMember(teamId, userId)) {
+    next(new createHttpError.Unauthorized());
   }
+
+  const team = await queryTeam(teamId).catch(next);
+  res.status(200).json({ team });
 });
 
 router.post('/', withAuth, async (req, res, next) => {
-  try {
-    const userId = req.userId;
-
-    const scrimIds = new Set(req.body.map((team) => team.scrimId));
-
-    const scrims = await prisma.scrim.findMany({
-      where: {
-        id: {
-          in: [...scrimIds],
-        },
-      },
-    });
-
-    scrims.forEach((scrim) => {
-      if (scrim.hostId !== userId) {
-        res.status(400).json({
-          message: 'Unauthorized',
-        });
-      }
-    });
-
-    // connect is not available for createMany, so perform insert in a loop D=
-    const inserts = [];
-    [...req.body].forEach((team) => {
-      inserts.push(
-        prisma.team.create({
-          data: {
-            ...team,
-            members: {
-              connect: team.members.map((member) => ({ id: member.id })),
-            },
-          },
-        })
-      );
-    });
-    const teamInserts = await Promise.all(inserts);
-    const teams = await prisma.team.findMany({
-      where: {
-        id: {
-          in: teamInserts.map((team) => team.id),
-        },
-      },
-      include: {
-        members: {
-          include: {
-            summoner: true,
-          },
-        },
-      },
-    });
-
-    res.status(200).json({
-      teams,
-    });
-  } catch (err) {
-    console.log(err);
-    res.status(500).json({
-      message: 'An error occurred while creating the team',
-    });
+  const userId = req.userId;
+  const scrimIds = new Set(req.body.map((team) => team.scrimId));
+  if (scrimIds.size() !== 1) {
+    next(new createHttpError.BadRequest('All teams must be for the same scrim'));
   }
+
+  const scrimId = [...scrimIds][0];
+  if (!validateHost(userId, scrimId)) {
+    next(new createHttpError.Unauthorized());
+  }
+
+  // connect is not available for createMany, so perform insert in a loop
+  const inserts = [];
+  [...req.body].forEach((team) => {
+    inserts.push(
+      prisma.team.create({
+        data: {
+          ...team,
+          members: {
+            connect: team.members.map((member) => ({ id: member.id })),
+          },
+        },
+      })
+    );
+  });
+
+  const teamInserts = await Promise.all(inserts).catch(next);
+  const teams = await queryTeams(teamInserts.map((t) => t.id)).catch(next);
+
+  res.status(200).json({ teams });
 });
 
 router.patch('/', withAuth, async (req, res, next) => {
-  try {
-    const userId = req.userId;
+  const userId = req.userId;
+  const scrimIds = new Set(req.body.map((team) => team.scrimId));
 
-    const scrimIds = new Set(req.body.map((team) => team.scrimId));
-
-    const scrims = await prisma.scrim.findMany({
-      where: {
-        id: {
-          in: [...scrimIds],
-        },
-      },
-    });
-
-    scrims.forEach((scrim) => {
-      if (scrim.hostId !== userId) {
-        res.status(400).json({
-          message: 'Unauthorized',
-        });
-      }
-    });
-
-    // updateMany does not allow for different values per match, so we have to update each record separately
-    const updates = [];
-    [...req.body].forEach((team) => {
-      updates.push(
-        prisma.team.update({
-          where: {
-            id: team.id,
-          },
-          data: {
-            ...team,
-            members: {
-              connect: team.members.map((member) => ({ id: member.id })),
-            },
-          },
-        })
-      );
-    });
-    const teams = await Promise.all(updates);
-    res.status(200).json({
-      teams,
-    });
-  } catch (err) {
-    res.status(500).json({
-      message: 'An error occurred while updating the team',
-    });
+  if (scrimIds.size() !== 1) {
+    next(new createHttpError.BadRequest('All teams must be for the same scrim'));
   }
+
+  const [scrimId] = scrimIds;
+  if (!validateHost(userId, scrimId)) {
+    next(new createHttpError.Unauthorized());
+  }
+
+  // updateMany does not allow for different values per match, so we have to update each record separately
+  const updates = [];
+  [...req.body].forEach((team) => {
+    updates.push(
+      prisma.team.update({
+        where: {
+          id: team.id,
+        },
+        data: {
+          ...team,
+          members: {
+            connect: team.members.map((member) => ({ id: member.id })),
+          },
+        },
+      })
+    );
+  });
+  const teams = await Promise.all(updates).catch(next);
+  res.status(200).json({ teams });
 });
 
 router.delete('/', withAuth, async (req, res, next) => {
-  try {
-    const userId = req.userId;
+  const userId = req.userId;
+  const scrimId = req.query.scrimId;
 
-    const scrim = await prisma.scrim.findUnique({
-      where: {
-        id: Number(req.query.scrimId),
-      },
-    });
+  if (!scrimId) {
+    next(new createHttpError.BadRequest('scrimId is required'));
+  }
 
-    if (scrim.hostId !== userId) {
-      res.status(400).json({
-        message: 'Unauthorized',
-      });
-    }
+  if (!validateHost(userId, scrimId)) {
+    next(new createHttpError.Unauthorized());
+  }
 
-    await prisma.team.deleteMany({
+  await prisma.team
+    .deleteMany({
       where: {
         scrimId: Number(req.query.scrimId),
       },
-    });
+    })
+    .catch(next);
 
-    res.status(200).json({
-      message: 'Success',
-    });
-  } catch (err) {
-    res.status(500).json({
-      message: 'An error occurred while deleting the team',
-    });
-  }
+  res.status(200).json({
+    message: 'Success',
+  });
 });
+
 export default router;

@@ -1,6 +1,5 @@
-import p from '@prisma/client';
-import createError from 'http-errors';
-const prisma = new p.PrismaClient();
+import prisma from '../utils/prisma.js';
+import createHttpError from 'http-errors';
 import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
 import jwt from '../utils/jwt.js';
@@ -16,7 +15,7 @@ export class AuthService {
     });
 
     if (existingUser) {
-      throw createError(409, 'This user already exists');
+      throw createHttpError(409, 'This user already exists');
     }
 
     const existingSummoner = await prisma.summoner.findFirst({
@@ -26,12 +25,12 @@ export class AuthService {
     });
 
     if (existingSummoner?.isClaimed) {
-      throw createError(500, 'This summoner is already claimed');
+      throw createHttpError(500, 'This summoner is already claimed');
     }
 
     const riotSummoner = await SummonerService.getSummonerByName(summonerName);
     if (!riotSummoner) {
-      throw createError(404, 'This summoner was not found');
+      throw createHttpError(404, 'This summoner was not found');
     }
     const summoner = await prisma.summoner.upsert({
       where: {
@@ -60,14 +59,18 @@ export class AuthService {
       },
     });
     data.accessToken = await jwt.signAccessToken({ id: user.id });
-    const fullUser = await prisma.user.findUnique({
-      where: {
-        id: user.id,
-      },
-      include: {
-        summoner: true,
-      },
-    });
+    const fullUser = await prisma.user
+      .findUnique({
+        where: {
+          id: user.id,
+        },
+        include: {
+          summoner: true,
+        },
+      })
+      .catch((err) => {
+        throw createHttpError(404, err);
+      });
     return { ...fullUser };
   }
 
@@ -79,10 +82,10 @@ export class AuthService {
       },
     });
     if (!user) {
-      throw createError.NotFound('Invalid credentials');
+      throw createHttpError.NotFound('Invalid credentials');
     }
     const checkPassword = bcrypt.compareSync(password, user.password);
-    if (!checkPassword) throw createError(401, 'Invalid credentials');
+    if (!checkPassword) throw new createHttpError.Unauthorized();
     const accessToken = await jwt.signAccessToken({ id: user.id });
     return accessToken;
   }

@@ -8,6 +8,15 @@ const client = axios.create({
 client.defaults.withCredentials = true;
 
 class API {
+  static automateScrim = async (id, pool, mode, teamSize) => {
+    const response = await client.post(`/scrim/${id}/automate`, {
+      pool,
+      mode,
+      teamSize,
+    });
+    return response.data;
+  };
+
   static confirmCode = async (code) => {
     await client.get(`/user/confirm?code=${code}`);
   };
@@ -21,13 +30,13 @@ class API {
     return response.data;
   };
 
-  static createRequest = async (scrimId) => {
-    const response = await client.post(`/scrim/${scrimId}/join`);
+  static createScrim = async () => {
+    const response = await client.post("/scrim", {});
     return response.data;
   };
 
-  static createScrim = async () => {
-    const response = await client.post("/scrim", {});
+  static createScrimRequestJoin = async (scrimId) => {
+    const response = await client.post(`/scrim/${scrimId}/join`);
     return response.data;
   };
 
@@ -118,6 +127,11 @@ class API {
 
   static updateScrim = async (scrim) => {
     const response = await client.patch(`/scrim/${scrim.id}`, scrim);
+    return response.data;
+  };
+
+  static updateScrimRequest = async (id, status) => {
+    const response = await client.patch(`/scrimrequest/${id}`, { status });
     return response.data;
   };
 

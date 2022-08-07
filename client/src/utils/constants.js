@@ -1,3 +1,12 @@
+export const scrimModeOptions = [
+  { text: "Manual", value: "MANUAL" },
+  { text: "Random", value: "RANDOM" },
+  { text: "Best Rank", value: "BEST_RANK" },
+  { text: "Worst Rank", value: "WORST_RANK" },
+];
+
+export const defaultScrimMode = "manual";
+
 export const steps = [
   {
     name: "pool",
@@ -39,4 +48,10 @@ export const steps = [
 export const SOCKET_EVENTS = Object.freeze({
   JOIN_SCRIM: "JOIN_SCRIM",
   GET_SCRIM: "GET_SCRIM",
+});
+
+export const SCRIMREQUEST_STATUS = Object.freeze({
+  APPROVE: "APPROVE",
+  DENY: "DENY",
+  PENDING: "PENDING",
 });

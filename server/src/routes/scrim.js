@@ -1,123 +1,139 @@
 import express from 'express';
-import p from '@prisma/client';
-
 const router = express.Router();
-const prisma = new p.PrismaClient();
+
+import prisma from '../utils/prisma';
+import createHttpError from 'http-errors';
 import withAuth from '../middlewares/auth.js';
 import { validateHost, validateScrim } from '../utils/validators.js';
 import { SCRIMREQUEST_TYPES, SOCKET_EVENTS } from '../utils/constants.js';
-import { notifyUser, queryScrim } from '../services';
+import { createScrimRequest, createTeams, notifyUser, queryScrim } from '../services';
 
 router.get('/', withAuth, async (req, res, next) => {
-  try {
-    const scrimId = req.params.id;
-    if (!validateHost(req.userId, scrimId)) {
-      res.status(401);
-    }
+  const scrimId = req.params.id;
+  if (!validateHost(req.userId, scrimId)) {
+    next(new createHttpError.Unauthorized());
+  }
 
-    const user = await prisma.user.findFirst({
+  const user = await prisma.user
+    .findUnique({
       where: {
         id: Number(req.userId),
       },
-    });
+    })
+    .catch(next);
 
-    const scrims = [];
-    const scrimsHosted = await prisma.scrim.findMany({
+  const scrims = [];
+  const hostedScrims = await prisma.scrim
+    .findMany({
       where: {
         hostId: user.id,
       },
-    });
-    scrims.concat(scrimsHosted);
+    })
+    .catch(next);
+  scrims.concat(hostedScrims);
 
-    if (user.summoner) {
-      const members = await prisma.member.findMany({
+  if (user.summoner) {
+    const members = await prisma.member
+      .findMany({
         where: {
           summonerId: user.summoner.id,
         },
-      });
+      })
+      .catch(next);
 
+    if (members) {
       const scrimIds = new Set(members.map((member) => member.scrimId));
-      const scrimsJoined = await prisma.scrim.findMany({
-        where: {
-          id: {
-            in: scrimIds,
+      const scrimsJoined = await prisma.scrim
+        .findMany({
+          where: {
+            id: {
+              in: scrimIds,
+            },
           },
-        },
-      });
+        })
+        .catch(next);
       scrims.concat(scrimsJoined);
     }
-    res.json(scrims);
-  } catch (err) {
-    res.status(500).json({
-      message: 'An error occurred retrieving this scrim',
-    });
   }
+  res.json(scrims);
 });
 
 router.post('/', withAuth, async (req, res, next) => {
-  try {
-    const result = await prisma.scrim.create({
+  const userId = req.userId;
+
+  const result = await prisma.scrim
+    .create({
       data: {
-        hostId: req.userId,
+        hostId: Number(userId),
       },
-    });
-    res.json({ teams: [], pool: [], ...result });
-  } catch (err) {
-    res.status(500).json({
-      message: 'An error occurred creating this scrim',
-    });
+    })
+    .catch(next);
+  res.json({ teams: [], pool: [], ...result });
+});
+
+router.post('/:id/automate', withAuth, async (req, res, next) => {
+  const scrimId = req.params.id;
+  const userId = req.userId;
+
+  if (!validateHost(userId, scrimId)) {
+    next(new createHttpError.Unauthorized());
   }
+
+  const { pool, mode, teamSize } = req.body;
+  const teams = createTeams(scrimId, pool, mode, teamSize).catch(next);
+
+  await prisma.scrim
+    .update({
+      where: {
+        id: Number(scrimId),
+      },
+      data: {
+        hostId: userId,
+        mode,
+        pool,
+        step: 'play',
+        teams,
+        teamSize,
+      },
+    })
+    .catch(next);
+
+  const scrim = await queryScrim(scrimId).catch(next);
+  return scrim;
 });
 
 router.post('/:id/join', withAuth, async (req, res, next) => {
-  try {
-    const scrimId = req.params.id;
-    const userId = req.userId;
-
-    await prisma.ScrimRequest.create({
-      data: {
-        scrimId: Number(scrimId),
-        userId: Number(userId),
-        type: SCRIMREQUEST_TYPES.MEMBER_JOIN,
-      },
-    });
-
-    const scrim = await queryScrim(scrimId);
-    await notifyUser(req, SOCKET_EVENTS.JOIN_SCRIM, scrim);
-  } catch (err) {
-    res.status(500).json({
-      message: 'An error occurred making the request',
-    });
-  }
+  // const scrimId = req.params.id;
+  // const userId = req.userId;
+  // const scrimRequest = await createScrimRequest(scrimId, userId, SCRIMREQUEST_TYPES.MEMBER_JOIN).catch(next);
+  // const scrim = await queryScrim(scrimId).catch(next);
+  // await notifyUser(req, SOCKET_EVENTS.JOIN_SCRIM, { scrim, scrimRequest });
 });
 
 router.get('/:id', withAuth, async (req, res, next) => {
-  try {
-    const scrimId = req.params.id;
-    const canViewScrim = await validateScrim(req.userId, scrimId);
-    if (!canViewScrim) {
-      res.status(401).json({ message: 'Unauthorized' });
-    } else {
-      const record = await queryScrim(scrimId);
-      if (!record) {
-        res.statusCode(404);
-      }
-      res.json(record);
-    }
-  } catch (err) {
-    res.status(500).json({ message: err });
+  const scrimId = req.params.id;
+  const canViewScrim = await validateScrim(req.userId, scrimId);
+
+  if (!canViewScrim) {
+    next(new createHttpError.Unauthorized());
   }
+
+  const record = await queryScrim(scrimId).catch(next);
+  if (!record) {
+    next(new createHttpError.NotFound());
+  }
+  res.json(record);
 });
 
 router.patch('/:id', withAuth, async (req, res, next) => {
-  try {
-    const scrimId = req.params.id;
-    if (!validateHost(req.userId, scrimId)) {
-      res.status(401);
-    }
+  const scrimId = req.params.id;
+  if (!validateHost(req.userId, scrimId)) {
+    next(new createHttpError.Unauthorized());
+  }
 
-    const scrim = { ...req.body };
-    await prisma.scrim.update({
+  const scrim = { ...req.body };
+  await prisma.scrim
+    .update({
       where: {
         id: Number(scrimId),
       },
@@ -136,41 +152,29 @@ router.patch('/:id', withAuth, async (req, res, next) => {
           connect: Array.isArray(scrim.teams) ? scrim.teams.map((team) => ({ id: team.id })) : [],
         },
       },
-    });
+    })
+    .catch(next);
 
-    await notifyUser(req, SOCKET_EVENTS.GET_SCRIM, await queryScrim(scrimId));
-
-    res.status(200).json({
-      message: 'Success',
-    });
-  } catch (err) {
-    console.log(err);
-    res.status(500).json({
-      message: 'An error occurred updating the scrim',
-    });
-  }
+  // await notifyUser(req, SOCKET_EVENTS.GET_SCRIM, await queryScrim(scrimId));
+  const updatedScrim = await queryScrim(scrimId);
+  res.status(200).json({ scrim: updatedScrim });
 });
 
 router.delete('/:id', withAuth, async (req, res, next) => {
-  try {
-    const scrimId = req.params.id;
-    if (!validateHost(req.userId, scrimId)) {
-      res.status(401);
-    }
+  const scrimId = req.params.id;
+  if (!validateHost(req.userId, scrimId)) {
+    next(new createHttpError.Unauthorized());
+  }
 
-    await prisma.scrim.delete({
+  await prisma.scrim
+    .delete({
       where: {
         id: Number(scrimId),
       },
-    });
-    res.json({
-      message: 'Success',
-    });
-  } catch (err) {
-    res.status(500).json({
-      message: 'An error occurred deleting this scrim',
-    });
-  }
+    })
+    .catch(next);
+
+  res.sendStatus(200);
 });
 
 export default router;

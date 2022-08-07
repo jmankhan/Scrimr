@@ -1,16 +1,21 @@
 import express from 'express';
-import p from '@prisma/client';
-const prisma = new p.PrismaClient();
-
 const router = express.Router();
-import { AuthService, SummonerService } from '../services';
+
+import prisma from '../utils/prisma.js';
+import { AuthService, queryUser, SummonerService } from '../services';
 import withAuth from '../middlewares/auth.js';
+import createHttpError from 'http-errors';
 
 router.post('/', withAuth, async (req, res, next) => {
-  try {
-    const name = req.body.name;
-    const summoner = await SummonerService.getSummonerByName(name);
-    await prisma.summoner.upsert({
+  const name = req.body.name;
+
+  if (!name) {
+    next(new createHttpError.BadRequest('name is required'));
+  }
+
+  const summoner = await SummonerService.getSummonerByName(name).catch(next);
+  await prisma.summoner
+    .upsert({
       where: { id: summoner.id },
       update: {
         ...summoner,
@@ -18,99 +23,71 @@ router.post('/', withAuth, async (req, res, next) => {
       create: {
         ...summoner,
       },
-    });
+    })
+    .catch(next);
 
-    res.json({
-      summoner,
-    });
-  } catch (err) {
-    res.status(500).json({ message: err });
-  }
+  res.status(200).json({ summoner });
 });
 
 router.get('/:id', withAuth, async (req, res, next) => {
-  try {
-    const id = req.params.id;
-    let summoner = await prisma.summoner.findUnique({
+  const id = req.params.id;
+  let summoner = await prisma.summoner
+    .findUnique({
       where: {
         id,
       },
-    });
+    })
+    .catch(next);
 
-    if (summoner) {
-      res.json({
-        summoner,
-      });
-    } else {
-      summoner = await SummonerService.getSummonerByName(id);
-      await prisma.summoner.create({
+  if (!summoner) {
+    summoner = await SummonerService.getSummonerByName(id);
+    await prisma.summoner
+      .create({
         data: {
           ...summoner,
         },
-      });
+      })
+      .catch(next);
 
-      res.json({
-        summoner,
-      });
-    }
-
-    res.status(500).json({
-      message: 'There was an error finding this summoner',
-    });
-  } catch (err) {
-    res.status(500).json({ message: err });
+    res.status(200).json({ summoner });
   }
 });
 
 router.post('/:id/link', withAuth, async (req, res, next) => {
-  try {
-    const summonerId = req.params.id;
-    const token = req.headers.authorization.split('Bearer ')[1];
-    const jwtUser = await AuthService.getCurrentUser(token);
+  const summonerId = req.params.id;
+  const userId = req.userId;
 
-    const user = await prisma.user.findUnique({
-      where: {
-        id: jwtUser.id,
-      },
-    });
+  const user = await queryUser(userId).catch(next);
 
-    await prisma.summoner.update({
+  await prisma.summoner
+    .update({
       where: {
         id: summonerId,
       },
       data: {
         userId: user.id,
       },
-    });
+    })
+    .catch(next);
 
-    res.status(200).json({
-      message: 'Success',
-    });
-  } catch (err) {
-    res.status(500).json({ message: err });
-  }
+  res.sendStatus(200);
 });
 
 router.post('/:id/sync', withAuth, async (req, res, next) => {
-  try {
-    const id = req.params.id;
-    const summoner = SummonerService.getSummonerById(id);
+  const summonerId = req.params.id;
+  const summoner = await SummonerService.getSummonerById(summonerId).catch(next);
 
-    await prisma.summoner.update({
+  await prisma.summoner
+    .update({
       where: {
-        id,
+        id: summonerId,
       },
       data: {
         ...summoner,
       },
-    });
-
-    res.status(200).json({
-      message: 'Success',
-    });
-  } catch (err) {
-    res.status(500).json({ message: err });
-  }
+    })
+    .catch(next);
+  res.sendStatus(200);
 });
 
 export default router;

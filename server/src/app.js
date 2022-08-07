@@ -10,14 +10,22 @@ import enforce from 'express-sslify';
 import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-import { Server } from 'socket.io';
 import YAML from 'yamljs';
 import swaggerUi from 'swagger-ui-express';
 const swaggerDocument = YAML.load('./swagger.yaml');
+import createHttpError from 'http-errors';
 
-import { memberRouter, scrimRouter, searchRouter, summonerRouter, teamRouter, userRouter } from './routes/index.js';
+import {
+  memberRouter,
+  scrimRouter,
+  scrimRequestRouter,
+  searchRouter,
+  summonerRouter,
+  teamRouter,
+  userRouter,
+} from './routes/index.js';
 
-var app = express();
+const app = express();
 
 if (process.env.NODE_ENV !== 'dev') {
   app.use(enforce.HTTPS({ trustProtoHeader: true }));
@@ -54,6 +62,7 @@ app.use(function (req, res, next) {
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 app.use('/api/member/', memberRouter);
 app.use('/api/scrim/', scrimRouter);
+app.use('/api/scrimRequest', scrimRequestRouter);
 app.use('/api/search/', searchRouter);
 app.use('/api/summoner/', summonerRouter);
 app.use('/api/team', teamRouter);
@@ -67,10 +76,32 @@ app.get('*', (req, res) => {
   }
 });
 
-app.use((error, req, res, next) => {
-  console.log(error);
-  error.statusCode = error.statusCode || 500;
-  return res.status(error.statusCode).json({ message: error.toString() });
+app.use((err, req, res, next) => {
+  console.log('error handler');
+  let response;
+  if (err instanceof createHttpError.HttpError) {
+    response = { message: err.message, status: err.status };
+    if (process.env.NODE_ENV === 'development') {
+      response.stack = err.stack;
+    } else {
+      console.log(err.stack);
+    }
+  }
+
+  if (process.env.NODE_ENV !== 'development' && !response) {
+    response = { message: 'Something went wrong', status: 500 };
+  }
+
+  if (response) {
+    res.send({
+      error: err.name,
+      code: parseInt(response.status, 10),
+      message: response.message,
+      stack: response.stack,
+    });
+  } else {
+    next(error);
+  }
 });
 
 export default app;

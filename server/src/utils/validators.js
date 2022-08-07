@@ -1,5 +1,4 @@
-import p from '@prisma/client';
-const prisma = new p.PrismaClient();
+import prisma from '../utils/prisma.js';
 
 export const validateHost = async (userId, scrimId) => {
   const scrim = await prisma.scrim.findUnique({
@@ -35,4 +34,25 @@ export const validateScrim = async (userId, scrimId) => {
     console.log('is not authorized');
     return false;
   }
+};
+
+export const validateTeamMember = async (teamId, userId) => {
+  const user = await prisma.user.findUnique({
+    where: {
+      id: Number(userId),
+    },
+  });
+
+  const members = await prisma.user.findUnique({
+    where: {
+      id: Number(teamId),
+      members: {
+        some: {
+          summonerId: user.summoner.id,
+        },
+      },
+    },
+  });
+
+  return members.length > 0;
 };

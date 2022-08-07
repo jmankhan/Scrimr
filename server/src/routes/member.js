@@ -1,178 +1,149 @@
 import express from 'express';
-import p from '@prisma/client';
-
 const router = express.Router();
-const prisma = new p.PrismaClient();
+import prisma from '../utils/prisma.js';
 
 import withAuth from '../middlewares/auth.js';
 import { SummonerService } from '../services/';
-
-router.get('/', async (req, res, next) => {
-  const records = await prisma.member.findMany();
-  res.json({
-    members: records,
-  });
-});
+import createHttpError from 'http-errors';
+import { queryMember } from '../services/member.service.js';
 
 router.post('/', withAuth, async (req, res, next) => {
-  try {
-    const { summonerId, scrimId } = req.body;
-    const safeSummonerId = decodeURI(summonerId);
-    let summoner = await prisma.summoner.findUnique({
-      where: {
-        id: safeSummonerId,
-      },
-    });
+  const { summonerId, scrimId } = req.body;
 
-    if (!summoner) {
-      try {
-        const summonerResponse = await SummonerService.getSummonerByName(safeSummonerId);
-        summoner = await prisma.summoner.create({
-          data: {
-            ...summonerResponse,
-          },
-        });
-      } catch (err) {
-        return next(err);
-      }
-    }
+  const safeSummonerId = decodeURI(summonerId);
+  let summoner = await prisma.summoner.findUnique({
+    where: {
+      id: safeSummonerId,
+    },
+  });
 
-    const memberExists = await prisma.member.findFirst({
-      where: {
-        AND: [
-          {
-            summonerId: {
-              equals: safeSummonerId,
-            },
-          },
-          {
-            scrimId: {
-              equals: scrimId,
-            },
-          },
-        ],
-      },
-    });
-
-    if (memberExists) {
-      return next(new Error('This member is already in the pool'));
-    }
-
-    const member = await prisma.member
+  if (!summoner) {
+    const summonerResponse = await SummonerService.getSummonerByName(safeSummonerId).catch(next);
+    summoner = await prisma.summoner
       .create({
         data: {
-          summonerId: summoner.id,
-          scrimId,
+          ...summonerResponse,
         },
       })
       .catch(next);
-
-    res.json({
-      member,
-    });
-  } catch (err) {
-    res.status(500).json({
-      message: err,
-    });
   }
+
+  const memberExists = await prisma.member.findFirst({
+    where: {
+      AND: [
+        {
+          summonerId: {
+            equals: safeSummonerId,
+          },
+        },
+        {
+          scrimId: {
+            equals: Number(scrimId),
+          },
+        },
+      ],
+    },
+  });
+
+  if (memberExists) {
+    return next(new createHttpError.BadRequest('This member is already in the pool'));
+  }
+
+  const member = await prisma.member
+    .create({
+      data: {
+        summonerId: summoner.id,
+        scrimId: Number(scrimId),
+      },
+    })
+    .catch(next);
+
+  res.status(200).json({
+    member,
+  });
 });
 
 router.get('/:id', withAuth, async (req, res, next) => {
-  try {
-    const member = await prisma.member.findUnique({
-      where: {
-        id: Number(req.params.id),
-      },
-      include: {
-        summoner: true,
-        team: true,
-        scrim: true,
-      },
-    });
+  const memberId = req.params.id;
 
-    if (member) {
-      res.status(200).json({
-        member,
-      });
-    } else {
-      res.status(404).json({
-        message: 'Member not found',
-      });
-    }
-  } catch (err) {
-    res.status(500).json({ message: err });
+  const member = await queryMember(memberId).catch(next);
+
+  if (!member) {
+    next(new createHttpError.NotFound());
   }
+
+  res.status(200).json({ member });
 });
 
 router.delete('/:id', withAuth, async (req, res, next) => {
-  try {
-    await prisma.member.delete({
+  const memberId = req.params.id;
+  await prisma.member
+    .delete({
       where: {
-        id: Number(req.params.id),
+        id: Number(memberId),
       },
-    });
+    })
+    .catch(next);
 
-    res.status(200).json({
-      message: 'Success',
-    });
-  } catch (err) {
-    res.status(500).json({ message: err });
-  }
+  res.sendStatus(200);
 });
 
 router.put('/:id', withAuth, async (req, res, next) => {
-  try {
-    await prisma.member.update({
+  const memberId = req.params.id;
+  await prisma.member
+    .update({
       where: {
-        id: Number(req.params.id),
+        id: Number(memberId),
       },
       data: {
         ...req.body,
       },
-    });
-  } catch (err) {
-    res.status(500).json({ message: err });
-  }
+    })
+    .catch(next);
+
+  const updatedMember = await queryMember(memberId).catch(next);
+  res.status(200).json({ member: updatedMember });
 });
 
 router.patch('/', withAuth, async (req, res, next) => {
-  try {
-    // validate all members are in same scrim and if user is host of that scrim
+  // validate all members are in same scrim and if user is host of that scrim
+  const members = [...req.body.members];
+  const scrimIds = new Set(members.map(member.scrimId));
 
-    const updates = [];
-    [...req.body.members].forEach((member) => {
-      const { team, summoner, scrim, ...rest } = member;
-      updates.push(
-        prisma.member.update({
-          where: {
-            id: Number(member.id),
-          },
-          data: {
-            ...rest,
-          },
-        })
-      );
-    });
-
-    const memberUpdates = await Promise.all(updates);
-    const members = await prisma.member.findMany({
-      where: {
-        id: {
-          in: memberUpdates.map((member) => member.id),
-        },
-      },
-      include: {
-        summoner: true,
-        team: true,
-        scrim: true,
-      },
-    });
-
-    res.json({ members });
-  } catch (err) {
-    console.log(err);
-    res.status(500).json({ message: err });
+  if (scrimIds.size() !== 1) {
+    next(new createHttpError.BadRequest('All members must be in the same scrim'));
   }
+
+  const updates = [];
+  members.forEach((member) => {
+    const { team, summoner, scrim, ...rest } = member;
+    updates.push(
+      prisma.member.update({
+        where: {
+          id: Number(member.id),
+        },
+        data: {
+          ...rest,
+        },
+      })
+    );
+  });
+
+  const memberUpdates = await Promise.all(updates).catch(next);
+  const updatedMembers = await prisma.member.findMany({
+    where: {
+      id: {
+        in: memberUpdates.map((m) => m.id),
+      },
+    },
+    include: {
+      summoner: true,
+      team: true,
+      scrim: true,
+    },
+  });
+
+  res.json({ members: updatedMembers });
 });
 
 export default router;

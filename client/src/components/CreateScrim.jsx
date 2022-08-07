@@ -1,13 +1,5 @@
 import React, { useContext, useEffect, useState } from "react";
-import {
-  Button,
-  Container,
-  Header,
-  Icon,
-  Loader,
-  Menu,
-  Step,
-} from "semantic-ui-react";
+import { Button, Icon, Loader, Menu, Step } from "semantic-ui-react";
 import { NotificationManager } from "react-notifications";
 import { useParams, useNavigate } from "react-router-dom";
 import API from "../api";
@@ -16,11 +8,11 @@ import CreateScrimSelectCaptains from "./CreateScrimSelectCaptains";
 import CreateScrimPrizeWheel from "./CreateScrimPrizeWheel";
 import CreateScrimDraft from "./CreateScrimDraft";
 import CreateScrimPlay from "./CreateScrimPlay";
-import { steps } from "../utils/constants";
+import CreateScrimRequestAccess from "./CreateScrimRequestAccess";
+import { defaultScrimMode, steps } from "../utils/constants";
 import CreateScrimSpectator from "./CreateScrimSpectator";
 import useAuth from "../contexts/Auth";
 import { SocketContext } from "../contexts/Socket";
-import { SOCKET_EVENTS } from "../utils/constants";
 
 const CreateScrim = () => {
   const [data, setData] = useState();
@@ -71,74 +63,26 @@ const CreateScrim = () => {
     } finally {
       setLoading(false);
     }
-
-    socket.on("connect", () => {
-      console.log("connect");
-      setIsSocketConnected(true);
-    });
-
-    socket.on("disconnect", () => {
-      console.log("disconnect");
-      setIsSocketConnected(false);
-    });
-
-    socket.on(id, (data) => {
-      if (data[SOCKET_EVENTS.GET_SCRIM]) {
-        const payload = data[SOCKET_EVENTS.GET_SCRIM];
-        setData(payload.scrim);
-      }
-    });
-
-    socket.on(auth.value.user.id, (data) => {
-      if (data[SOCKET_EVENTS.JOIN_SCRIM]) {
-        const payload = data[SOCKET_EVENTS.JOIN_SCRIM];
-        NotificationManager.success(
-          "Join Request",
-          <div>
-            `${payload.request.user.summoner.name} is asking to join this scrim`
-            <Button
-              icon="checkmark"
-              onClick={async () => {
-                const summonerId = payload.request.user.summonerId;
-                const scrimId = data.id;
-
-                try {
-                  setLoading(true);
-                  await API.createMember(summonerId, scrimId);
-                } catch (err) {
-                  NotificationManager.error("Error", err.message, 5000);
-                } finally {
-                  setLoading(false);
-                }
-              }}
-            />
-            <Button icon="close" onClick={() => {}} />
-          </div>
-        );
-      }
-    });
-
-    return () => {
-      socket.off("connect");
-      socket.off("disconnect");
-      socket.off(auth.value.user.id);
-      socket.off(id);
-    };
   }, []);
 
   const handleContinue = async () => {
     let stepIndex = steps.findIndex((step) => step.name === data.step);
-    let step;
-
-    if (stepIndex === 0 && data.autoDraft) {
-      step = "play";
-    } else {
-      step = steps[stepIndex + 1].name;
-    }
+    const skipToEnd = stepIndex === 0 && data.mode === defaultScrimMode;
+    let step = steps[stepIndex + 1].name;
 
     try {
       setLoading(true);
-      await API.updateScrim({ ...data, step });
+      if (skipToEnd) {
+        const result = await API.automateScrim(
+          data.id,
+          data.members,
+          data.mode,
+          data.teamSize
+        );
+        setData(result.scrim);
+      } else {
+        await API.updateScrim({ ...data, step });
+      }
     } catch (err) {
       NotificationManager.error("Error", err.response.data.error, 5000);
     } finally {
@@ -174,13 +118,12 @@ const CreateScrim = () => {
     }
   };
 
-  const updatePoolData = ({ members, teamSize, autoDraft, autoBalance }) => {
+  const updatePoolData = ({ members, teamSize, mode }) => {
     const newData = {
       ...data,
       pool: [...members],
       teamSize,
-      autoDraft,
-      autoBalance,
+      mode,
     };
 
     setData(newData);
@@ -239,10 +182,6 @@ const CreateScrim = () => {
     setCanContinue(teams.length > 0);
   };
 
-  const handleError = (message) => {
-    NotificationManager.error(null, message, 5000);
-  };
-
   const isSpectator = () => {
     return (
       data &&
@@ -255,26 +194,15 @@ const CreateScrim = () => {
     return data && data.hostId === auth.value.user.id;
   };
 
-  const handleRequestAccess = async () => {
-    try {
-      await API.createRequest(id);
-    } catch (err) {
-      NotificationManager.error("Error", err.message, 5000);
-    }
-  };
-
   return (
     <div>
       {loading && <Loader />}
       {!loading && canRequestAccess && (
-        <Container style={{ marginTop: "3rem" }}>
-          <Header>Ask the host for access?</Header>
-          <Button
-            primary
-            content="Request Access"
-            onClick={handleRequestAccess}
-          />
-        </Container>
+        <CreateScrimRequestAccess
+          data={data}
+          scrimId={id}
+          user={auth.value.user}
+        />
       )}
       {!loading && data && isSpectator() && (
         <CreateScrimSpectator data={data} />
@@ -298,9 +226,7 @@ const CreateScrim = () => {
               members={data.pool}
               scrimId={data.id}
               teamSize={data.teamSize}
-              autoDraft={data.autoDraft}
-              autoBalance={data.autoBalance}
-              onError={handleError}
+              mode={data.mode}
               onChange={updatePoolData}
             />
           )}
