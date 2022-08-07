@@ -99,7 +99,7 @@ router.post('/:id/automate', withAuth, async (req, res, next) => {
     .catch(next);
 
   const scrim = await queryScrim(scrimId).catch(next);
-  return scrim;
+  res.json({ scrim });
 });
 
 router.post('/:id/join', withAuth, async (req, res, next) => {
@@ -131,25 +131,24 @@ router.patch('/:id', withAuth, async (req, res, next) => {
     next(new createHttpError.Unauthorized());
   }
 
-  const scrim = { ...req.body };
+  const { draftOrder, mode, sideOrder, step, teamSize, pool, teams } = { ...req.body };
+
   await prisma.scrim
     .update({
       where: {
         id: Number(scrimId),
       },
       data: {
-        id: scrim.id,
-        autoDraft: scrim.autoDraft,
-        autoBalance: scrim.autoBalance,
-        draftOrder: scrim.draftOrder,
-        sideOrder: scrim.sideOrder,
-        step: scrim.step,
-        teamSize: scrim.teamSize,
+        draftOrder,
+        mode,
+        sideOrder,
+        step,
+        teamSize,
         pool: {
-          connect: Array.isArray(scrim.pool) ? scrim.pool.map((member) => ({ id: member.id })) : [],
+          connect: Array.isArray(pool) ? pool.map((member) => ({ id: member.id })) : [],
         },
         teams: {
-          connect: Array.isArray(scrim.teams) ? scrim.teams.map((team) => ({ id: team.id })) : [],
+          connect: Array.isArray(teams) ? teams.map((team) => ({ id: team.id })) : [],
         },
       },
     })
