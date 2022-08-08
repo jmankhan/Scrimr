@@ -61,6 +61,7 @@ router.get('/', withAuth, async (req, res, next) => {
 router.post('/', withAuth, async (req, res, next) => {
   const userId = req.userId;
 
+  console.log('entering post with userid ' + userId);
   const result = await prisma.scrim
     .create({
       data: {
@@ -68,6 +69,7 @@ router.post('/', withAuth, async (req, res, next) => {
       },
     })
     .catch(next);
+  console.log('created scrim: ' + JSON.stringify(result));
   res.status(200).json({ teams: [], pool: [], ...result });
 });
 

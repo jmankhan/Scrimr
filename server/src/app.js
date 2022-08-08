@@ -78,6 +78,7 @@ app.get('*', (req, res) => {
 
 app.use((err, req, res, next) => {
   console.log('error handler');
+  console.log(JSON.stringify(err));
   let response;
   if (err instanceof createHttpError.HttpError) {
     response = { message: err.message, status: err.status };
