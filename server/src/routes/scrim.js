@@ -68,7 +68,7 @@ router.post('/', withAuth, async (req, res, next) => {
       },
     })
     .catch(next);
-  return res.status(200).json({ teams: [], pool: [], ...result });
+  res.status(200).json({ teams: [], pool: [], ...result });
 });
 
 router.post('/:id/automate', withAuth, async (req, res, next) => {
