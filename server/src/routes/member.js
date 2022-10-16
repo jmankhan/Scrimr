@@ -18,7 +18,7 @@ router.post('/', withAuth, async (req, res, next) => {
   });
 
   if (!summoner) {
-    summoner = await prisma.summoner.findMany({
+    summoner = await prisma.summoner.findFirst({
       where: {
         name: {
           contains: safeSummonerId.replace(/[\\$'"]/g, '\\$&'),
