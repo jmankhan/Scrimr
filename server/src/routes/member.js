@@ -18,6 +18,17 @@ router.post('/', withAuth, async (req, res, next) => {
   });
 
   if (!summoner) {
+    summoner = await prisma.summoner.findMany({
+      where: {
+        name: {
+          contains: safeSummonerId.replace(/[\\$'"]/g, '\\$&'),
+          mode: 'insensitive',
+        },
+      },
+    });
+  }
+
+  if (!summoner) {
     const summonerResponse = await SummonerService.getSummonerByName(safeSummonerId).catch(next);
     summoner = await prisma.summoner
       .create({
@@ -108,9 +119,9 @@ router.put('/:id', withAuth, async (req, res, next) => {
 router.patch('/', withAuth, async (req, res, next) => {
   // validate all members are in same scrim and if user is host of that scrim
   const members = [...req.body.members];
-  const scrimIds = new Set(members.map(member.scrimId));
+  const scrimIds = new Set(members.map((m) => m.scrimId));
 
-  if (scrimIds.size() !== 1) {
+  if (scrimIds.size !== 1) {
     next(new createHttpError.BadRequest('All members must be in the same scrim'));
   }
 
