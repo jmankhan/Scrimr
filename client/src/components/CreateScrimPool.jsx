@@ -18,8 +18,8 @@ import "./CreateScrimPool.css";
 import useRankImages from "../hooks/useRankImage";
 import { chunkMembers } from "../utils";
 import {
-  defaultScrimMode,
-  scrimModeOptions,
+  DEFAULT_SCRIM_MODE,
+  SCRIM_MODE_OPTIONS,
   SCRIMREQUEST_STATUS,
   SOCKET_EVENTS,
 } from "../utils/constants";
@@ -65,6 +65,7 @@ const CreateScrimPool = (props) => {
     });
   }, [props]);
 
+  /*
   useEffect(() => {
     const scrimId = props.scrimId;
     const userId = auth?.value.user.id;
@@ -148,7 +149,8 @@ const CreateScrimPool = (props) => {
       }
     };
   }, [props.scrimId]);
-
+  */
+ 
   const handleSearch = async (value) => {
     setSearchValue(value);
     if (value) {
@@ -180,10 +182,10 @@ const CreateScrimPool = (props) => {
     props.onChange(newData);
   };
 
-  const handleModeUpdate = (data) => {
+  const updateMode = (e, eventData) => {
     const newData = {
       ...data,
-      mode: data.value,
+      mode: eventData.value,
     };
 
     props.onChange(newData);
@@ -325,14 +327,13 @@ const CreateScrimPool = (props) => {
                 label="Mode"
                 input={
                   <Dropdown
-                    defaultValue={defaultScrimMode}
-                    onChange={(e, data) => handleModeUpdate(data)}
-                    options={scrimModeOptions}
+                    defaultValue={data.mode || DEFAULT_SCRIM_MODE}
+                    onChange={updateMode}
+                    options={SCRIM_MODE_OPTIONS}
                     selection
                     style={{
                       borderRadius: "0 4px 4px 0",
                     }}
-                    value={data.mode}
                   />
                 }
               />
