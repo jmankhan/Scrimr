@@ -6,18 +6,21 @@ const riotApi = new twisted.LolApi();
 export class SummonerService {
   static async getSummonerByName(name) {
     try {
-      const riotResponse = await riotApi.Summoner.getByName(name, twisted.Constants.Regions.AMERICA_NORTH).catch(next);
-      return SummonerService.getSummonerByResponse(riotResponse.response);
+      const riotResponse = await riotApi.Summoner.getByName(name, twisted.Constants.Regions.AMERICA_NORTH);
+      console.log('response ' + JSON.stringify(riotResponse));
+      return await SummonerService.getSummonerByResponse(riotResponse.response);
     } catch (err) {
+      console.log('riot api err - ' + err);
       throw new createHttpError.NotFound();
     }
   }
 
   static async getSummonerById(id) {
-    const riotResponse = await riotApi.Summoner.getById(id, twisted.Constants.Regions.AMERICA_NORTH).catch(next);
-    if (riotResponse.response) {
-      return SummonerService.getSummonerByResponse(riotResponse.response);
-    } else {
+    try {
+      const riotResponse = await riotApi.Summoner.getById(id, twisted.Constants.Regions.AMERICA_NORTH);
+      console.log(riotResponse);
+      return await SummonerService.getSummonerByResponse(riotResponse.response);
+    } catch (err) {
       throw new createHttpError.NotFound();
     }
   }
@@ -32,14 +35,14 @@ export class SummonerService {
       rank: -1,
     };
 
-    const riotResponse = await riotApi.League.bySummoner(id, twisted.Constants.Regions.AMERICA_NORTH).catch(next);
-    if (riotResponse) {
+    try {
+      const riotResponse = await riotApi.League.bySummoner(id, twisted.Constants.Regions.AMERICA_NORTH);
       const leagues = riotResponse.response;
       const rankedSolo = leagues.find((l) => l.queueType === 'RANKED_SOLO_5x5');
       if (rankedSolo) {
         summoner.rank = riotUtils.getRank(rankedSolo.tier, rankedSolo.rank);
       }
-    } else {
+    } catch (err) {
       throw new createHttpError.NotFound();
     }
 
