@@ -9,14 +9,17 @@ import { queryMember } from '../services/member.service.js';
 
 router.post('/', withAuth, async (req, res, next) => {
   const { summonerId, scrimId } = req.body;
-
+ 
+  console.log('posting with params: ' + summonerId + ' - ' + scrimId);
   const safeSummonerId = decodeURI(summonerId);
+  console.log('safeSummonerId: ' + safeSummonerId);
   let summoner = await prisma.summoner.findUnique({
     where: {
       id: safeSummonerId,
     },
   });
 
+  console.log('summoner ' + summoner);
   if (!summoner) {
     summoner = await prisma.summoner.findFirst({
       where: {
@@ -26,10 +29,13 @@ router.post('/', withAuth, async (req, res, next) => {
         },
       },
     });
+    console.log('tried to find summoner ' + summoner);
   }
 
   if (!summoner) {
+    console.log('summoner not found, trying to query riot api - ' + safeSummonerId);
     const summonerResponse = await SummonerService.getSummonerByName(safeSummonerId).catch(next);
+    console.log('riot response ' + JSON.stringify(summonerResponse));
     summoner = await prisma.summoner
       .create({
         data: {
@@ -37,6 +43,7 @@ router.post('/', withAuth, async (req, res, next) => {
         },
       })
       .catch(next);
+    console.log('found riot summoner ' + summoner);
   }
 
   const memberExists = await prisma.member.findFirst({
@@ -56,10 +63,12 @@ router.post('/', withAuth, async (req, res, next) => {
     },
   });
 
+  console.log('member exists? ' + memberExists != null);
   if (memberExists) {
     return next(new createHttpError.BadRequest('This member is already in the pool'));
   }
 
+  console.log('creating member with ' + summoner.id + ' - ' + scrimId);
   const member = await prisma.member
     .create({
       data: {
