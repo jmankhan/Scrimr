@@ -10,22 +10,15 @@ import {
 } from "semantic-ui-react";
 import API from "../api";
 import useAuth from "../contexts/Auth";
+import { ROLE_OPTIONS } from "../utils";
 
-const roleOptions = [
-  { text: "Top", value: "top" },
-  { text: "Jungle", value: "jg" },
-  { text: "Middle", value: "mid" },
-  { text: "Marksman", value: "adc" },
-  { text: "Support", value: "sup" },
-  { text: "Fill", value: "fill" },
-];
 const Profile = () => {
   const auth = useAuth();
   const [loading, setLoading] = useState(false);
   const [user, setUser] = useState(auth.value.user);
-  const [primaryRoleOptions, setPrimaryRoleOptions] = useState(roleOptions);
+  const [primaryRoleOptions, setPrimaryRoleOptions] = useState(ROLE_OPTIONS);
   const [secondaryRoleOptions, setSecondaryRoleOptions] = useState(
-    roleOptions.filter((option) => option.value !== "fill")
+    ROLE_OPTIONS.filter((option) => option.value !== "fill")
   );
 
   useEffect(() => {
@@ -56,10 +49,10 @@ const Profile = () => {
   const recalculateRoleOptions = (primaryRole, secondaryRole) => {
     if (user) {
       setPrimaryRoleOptions(
-        roleOptions.filter((role) => role.value !== secondaryRole)
+        ROLE_OPTIONS.filter((role) => role.value !== secondaryRole)
       );
       setSecondaryRoleOptions(
-        roleOptions.filter((role) => role.value !== primaryRole)
+        ROLE_OPTIONS.filter((role) => role.value !== primaryRole)
       );
     }
   };

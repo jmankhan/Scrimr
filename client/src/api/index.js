@@ -8,15 +8,6 @@ const client = axios.create({
 client.defaults.withCredentials = true;
 
 class API {
-  static automateScrim = async (id, pool, mode, teamSize) => {
-    const response = await client.post(`/scrim/${id}/automate`, {
-      pool,
-      mode,
-      teamSize,
-    });
-    return response.data;
-  };
-
   static confirmCode = async (code) => {
     await client.get(`/user/confirm?code=${code}`);
   };

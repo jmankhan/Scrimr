@@ -75,8 +75,10 @@ router.post('/:id/link', withAuth, async (req, res, next) => {
 
 router.post('/:id/sync', withAuth, async (req, res, next) => {
   const summonerId = req.params.id;
-  const summoner = await SummonerService.getSummonerById(summonerId).catch(next);
+  console.log('about to update summoner: ' + summonerId);
+  const summoner = await SummonerService.getSummonerById(summonerId);
 
+  console.log('updated summoner: ' + summoner);
   await prisma.summoner
     .update({
       where: {

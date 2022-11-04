@@ -5,8 +5,8 @@ import prisma from '../utils/prisma';
 import createHttpError from 'http-errors';
 import withAuth from '../middlewares/auth.js';
 import { validateHost, validateScrim } from '../utils/validators.js';
-import { SCRIMREQUEST_TYPES, SOCKET_EVENTS } from '../utils/constants.js';
-import { createScrimRequest, createTeams, notifyUser, queryScrim } from '../services';
+import { SCRIMREQUEST_TYPES, SCRIM_MODE, SOCKET_EVENTS } from '../utils/constants.js';
+import { automateScrim, createScrimRequest, createTeams, notifyUser, queryScrim, updateScrim } from '../services';
 
 router.get('/', withAuth, async (req, res, next) => {
   const scrimId = req.params.id;
@@ -61,7 +61,6 @@ router.get('/', withAuth, async (req, res, next) => {
 router.post('/', withAuth, async (req, res, next) => {
   const userId = req.userId;
 
-  console.log('entering post with userid ' + userId);
   const result = await prisma.scrim
     .create({
       data: {
@@ -69,39 +68,7 @@ router.post('/', withAuth, async (req, res, next) => {
       },
     })
     .catch(next);
-  console.log('created scrim: ' + JSON.stringify(result));
   res.status(200).json({ teams: [], pool: [], ...result });
-});
-
-router.post('/:id/automate', withAuth, async (req, res, next) => {
-  const scrimId = req.params.id;
-  const userId = req.userId;
-
-  if (!validateHost(userId, scrimId)) {
-    next(new createHttpError.Unauthorized());
-  }
-
-  const { pool, mode, teamSize } = req.body;
-  const teams = createTeams(scrimId, pool, mode, teamSize).catch(next);
-
-  await prisma.scrim
-    .update({
-      where: {
-        id: Number(scrimId),
-      },
-      data: {
-        hostId: userId,
-        mode,
-        pool,
-        step: 'play',
-        teams,
-        teamSize,
-      },
-    })
-    .catch(next);
-
-  const scrim = await queryScrim(scrimId).catch(next);
-  res.json({ scrim });
 });
 
 router.post('/:id/join', withAuth, async (req, res, next) => {
@@ -129,41 +96,33 @@ router.get('/:id', withAuth, async (req, res, next) => {
 
 router.patch('/:id', withAuth, async (req, res, next) => {
   const scrimId = req.params.id;
-  if (!validateHost(req.userId, scrimId)) {
+  const userId = req.userId;
+  const scrim = { ...req.body };
+  if (!validateHost(userId, scrimId)) {
     next(new createHttpError.Unauthorized());
   }
 
-  const { draftOrder, mode, sideOrder, step, teamSize, pool, teams } = { ...req.body };
+  let updatedScrim;
+  const { mode, teamSize, pool } = scrim;
+  if (mode !== SCRIM_MODE.MANUAL) {
+    try {
+      updatedScrim = await automateScrim(scrimId, pool, mode, teamSize);
+    } catch (err) {
+      next(err);
+    }
+  } else {
+    updateScrim(scrim);
+    // await notifyUser(req, SOCKET_EVENTS.GET_SCRIM, await queryScrim(scrimId));
+    updatedScrim = await queryScrim(scrimId);
+  }
 
-  await prisma.scrim
-    .update({
-      where: {
-        id: Number(scrimId),
-      },
-      data: {
-        draftOrder,
-        mode,
-        sideOrder,
-        step,
-        teamSize,
-        pool: {
-          connect: Array.isArray(pool) ? pool.map((member) => ({ id: member.id })) : [],
-        },
-        teams: {
-          connect: Array.isArray(teams) ? teams.map((team) => ({ id: team.id })) : [],
-        },
-      },
-    })
-    .catch(next);
-
-  // await notifyUser(req, SOCKET_EVENTS.GET_SCRIM, await queryScrim(scrimId));
-  const updatedScrim = await queryScrim(scrimId);
   res.status(200).json({ scrim: updatedScrim });
 });
 
 router.delete('/:id', withAuth, async (req, res, next) => {
   const scrimId = req.params.id;
-  if (!validateHost(req.userId, scrimId)) {
+  const userId = req.userId;
+  if (!validateHost(userId, scrimId)) {
     next(new createHttpError.Unauthorized());
   }
 

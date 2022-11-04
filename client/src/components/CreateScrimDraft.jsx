@@ -6,6 +6,7 @@ import {
   Divider,
   Grid,
   Header,
+  Modal,
   Segment,
   SegmentGroup,
 } from "semantic-ui-react";
@@ -13,6 +14,7 @@ import Member from "./Member";
 import { chunkMembers } from "../utils";
 
 const CreateScrimDraft = (props) => {
+  const [modalOpen, setModalOpen] = useState(false);
   const [teams, setTeams] = useState([]);
   const [turn, setTurn] = useState(0);
   const [sequence, setSequence] = useState([]);
@@ -48,6 +50,18 @@ const CreateScrimDraft = (props) => {
     setSequence([...sequence, { memberId, teamId: team.id }]);
 
     props.onChange(teams);
+  };
+
+  const handleClear = () => {
+    const newTeams = teams.map((team) => ({
+      ...team,
+      members: [team.members[0]],
+    }));
+    setTeams(newTeams);
+    setModalOpen(false);
+    setSequence([]);
+
+    props.onChange(newTeams);
   };
 
   const handleUndo = () => {
@@ -115,6 +129,31 @@ const CreateScrimDraft = (props) => {
               disabled={sequence.length <= 0}
               onClick={handleUndo}
             />
+            <Modal
+              trigger={
+                <Button
+                  icon="close"
+                  content="Clear"
+                  open={modalOpen}
+                  style={{ marginTop: "1em" }}
+                  onClick={() => setModalOpen(!modalOpen)}
+                />
+              }
+              open={modalOpen}
+            >
+              <Modal.Header>Are you sure?</Modal.Header>
+              <Modal.Content>
+                Resetting the draft cannot be undone.
+              </Modal.Content>
+              <Modal.Actions>
+                <Button negative onClick={() => setModalOpen(false)}>
+                  Cancel
+                </Button>
+                <Button positive onClick={handleClear}>
+                  Ok
+                </Button>
+              </Modal.Actions>
+            </Modal>
             <Divider section />
           </Container>
           <Grid columns={7} centered>

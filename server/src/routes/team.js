@@ -6,7 +6,7 @@ const prisma = new p.PrismaClient();
 import withAuth from '../middlewares/auth.js';
 import { validateHost, validateTeamMember } from '../utils/validators.js';
 import createHttpError from 'http-errors';
-import { queryTeam, queryTeams } from '../services/team.service.js';
+import { createTeams, queryTeam, queryTeams } from '../services/team.service.js';
 
 router.get('/:id', withAuth, async (req, res, next) => {
   const teamId = req.params.id;
@@ -23,7 +23,9 @@ router.get('/:id', withAuth, async (req, res, next) => {
 router.post('/', withAuth, async (req, res, next) => {
   const userId = req.userId;
   const scrimIds = new Set(req.body.map((team) => team.scrimId));
-  if (scrimIds.size() !== 1) {
+  const teams = [...req.body];
+
+  if (scrimIds.size !== 1) {
     next(new createHttpError.BadRequest('All teams must be for the same scrim'));
   }
 
@@ -32,25 +34,10 @@ router.post('/', withAuth, async (req, res, next) => {
     next(new createHttpError.Unauthorized());
   }
 
-  // connect is not available for createMany, so perform insert in a loop
-  const inserts = [];
-  [...req.body].forEach((team) => {
-    inserts.push(
-      prisma.team.create({
-        data: {
-          ...team,
-          members: {
-            connect: team.members.map((member) => ({ id: member.id })),
-          },
-        },
-      })
-    );
-  });
+  const teamInserts = await createTeams(teams);
+  const newTeams = await queryTeams(teamInserts.map((t) => t.id)).catch(next);
 
-  const teamInserts = await Promise.all(inserts).catch(next);
-  const teams = await queryTeams(teamInserts.map((t) => t.id)).catch(next);
-
-  res.status(200).json({ teams });
+  res.status(200).json({ teams: newTeams });
 });
 
 router.patch('/', withAuth, async (req, res, next) => {

@@ -143,17 +143,9 @@ const CreateScrimPrizeWheel = (props) => {
     "#445FA5",
     "#91A644",
   ];
-  const initialCaptains = props.members
-    .filter((m) => m.isCaptain)
-    .map((c, i) => ({
-      id: c.id,
-      label: c.summoner.name,
-      color: colors[i % colors.length],
-      member: c,
-    }));
 
   const [winners, setWinners] = useState([]);
-  const [captains, setCaptains] = useState(initialCaptains);
+  const [captains, setCaptains] = useState([]);
   const [disabled, setDisabled] = useState(false);
 
   const handleWinner = (winnerId) => {
@@ -174,22 +166,39 @@ const CreateScrimPrizeWheel = (props) => {
   };
 
   useEffect(() => {
-    if (props.teams) {
+    if (props.draftOrder && props.draftOrder.length > 0) {
       setWinners(
         props.teams.map(
-          (team) => team.members.filter((member) => member.isCaptain)[0].id
+          (team) => team.members.find((member) => member.isCaptain).id
         )
       );
+
+      const lastCaptain = [...props.teams]
+        .sort((a, b) => (a.draftOrder < b.draftOrder ? 1 : -1))[0]
+        .members.find((member) => member.isCaptain);
       setCaptains([
         {
           id: lastCaptain.id,
           label: lastCaptain.summoner.name,
-          color: colors[2],
+          color: colors[colors.length - 1],
           member: lastCaptain,
         },
       ]);
     }
-  }, [props.teams]);
+  }, [props.draftOrder]);
+
+  useEffect(() => {
+    const captains = props.members
+      .filter((m) => m.isCaptain)
+      .map((c, i) => ({
+        id: c.id,
+        label: c.summoner.name,
+        color: colors[i % colors.length],
+        member: c,
+      }));
+
+    setCaptains(captains);
+  }, [props.members, props.teams]);
 
   return (
     <Grid container>

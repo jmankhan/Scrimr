@@ -29,6 +29,7 @@ model Team {
   scrimId    Int?
   members    Member[]
   draftOrder Int?     @default(-1)
+  sideOrder  Int?     @default(-1)
 }
 
 model Summoner {
@@ -49,9 +50,8 @@ model Scrim {
   host        User           @relation(fields: [hostId], references: [id])
   hostId      Int
   isPrivate   Boolean        @default(true)
-  mode        String         @default("manual")
+  mode        String         @default("MANUAL")
   pool        Member[]
-  sideOrder   String?
   step        String         @default("pool")
   teams       Team[]
   teamSize    Int            @default(5)

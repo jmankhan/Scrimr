@@ -7,7 +7,7 @@ import {
   Segment,
   SegmentGroup,
 } from "semantic-ui-react";
-import { steps } from "../utils/constants.js";
+import { STEPS } from "../utils/constants.js";
 import { chunkMembers } from "../utils/index.js";
 import Member from "./Member.jsx";
 
@@ -19,7 +19,7 @@ const CreateScrimSpectator = (props) => {
   }, [props.data]);
 
   const renderPanels = (data) => {
-    const currentStepIndex = steps.findIndex((step) => step.name === data.step);
+    const currentStepIndex = STEPS.findIndex((step) => step.name === data.step);
     const allPanels = [
       {
         key: 0,

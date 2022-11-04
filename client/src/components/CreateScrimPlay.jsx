@@ -16,41 +16,12 @@ const CreateScrimPlay = (props) => {
   const [teamGroups, setTeamGroups] = useState([]);
 
   useEffect(() => {
-    // sort each team in group in reverse draft order so that the team that picked last gets to play in "team 1" side by default
     const groups = chunkMembers(props.teams, 2, "teams");
     groups.forEach((group) => {
-      group.teams.sort((a, b) => (a.draftOrder < b.draftOrder ? 1 : -1));
+      group.teams.sort((a, b) => (a.sideOrder > b.sideOrder ? 1 : -1));
     });
     setTeamGroups(groups);
   }, [props.teams]);
-
-  let teams = [];
-  if (props.autoBalance) {
-    const numTeams = Math.floor(props.members.length / props.teamSize);
-    const members = props.members.sort((a, b) => (a.rank > b.rank ? -1 : 1));
-    for (let i = 0; i < numTeams; i++) {
-      members[i].isCaptain = true;
-      teams.push({
-        id: i,
-        name: `${members[i].summoner.name}'s Team`,
-        members: members.filter((_, index) => index % i === 0),
-      });
-    }
-  } else if (props.autoDraft) {
-    const members = props.members.sort(() => (Math.random() < 0.5 ? -1 : 1));
-    for (let i = 0; i < members.length; i += props.teamSize) {
-      const teamMembers = members.slice(i, i + props.teamSize);
-      teamMembers[0].isCaptain = true;
-
-      teams.push({
-        id: i,
-        name: `${teamMembers[0].summoner.name}'s Team`,
-        members: teamMembers,
-      });
-    }
-  } else {
-    teams = props.teams;
-  }
 
   const handleSwapTeams = (id) => {
     const group = teamGroups.find((g) => g.id === id);
@@ -68,7 +39,7 @@ const CreateScrimPlay = (props) => {
                 <Grid columns={3}>
                   <Grid.Row>
                     {group.teams.map((team, index) => (
-                      <>
+                      <React.Fragment key={team.id}>
                         <Grid.Column>
                           <SegmentGroup>
                             <Segment
@@ -93,7 +64,7 @@ const CreateScrimPlay = (props) => {
                             />
                           </Grid.Column>
                         )}
-                      </>
+                      </React.Fragment>
                     ))}
                   </Grid.Row>
                 </Grid>

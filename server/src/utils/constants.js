@@ -2,7 +2,7 @@ export const SCRIM_MODE = Object.freeze({
   MANUAL: 'MANUAL',
   RANDOM: 'RANDOM',
   BEST_RANK: 'BEST_RANK',
-  WORST_RANK: 'WORST_RANK',
+  // WORST_RANK: 'WORST_RANK',
 });
 
 export const SOCKET_EVENTS = Object.freeze({

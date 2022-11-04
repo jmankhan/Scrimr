@@ -1,13 +1,22 @@
-export const scrimModeOptions = [
+export const ROLE_OPTIONS = [
+  { text: "Top", value: "top" },
+  { text: "Jungle", value: "jg" },
+  { text: "Middle", value: "mid" },
+  { text: "Marksman", value: "adc" },
+  { text: "Support", value: "sup" },
+  { text: "Fill", value: "fill" },
+];
+
+export const SCRIM_MODE_OPTIONS = [
   { text: "Manual", value: "MANUAL" },
   { text: "Random", value: "RANDOM" },
   { text: "Best Rank", value: "BEST_RANK" },
-  { text: "Worst Rank", value: "WORST_RANK" },
+  // { text: "Worst Rank", value: "WORST_RANK" },
 ];
 
-export const defaultScrimMode = "manual";
+export const DEFAULT_SCRIM_MODE = "MANUAL";
 
-export const steps = [
+export const STEPS = [
   {
     name: "pool",
     title: "Pool",

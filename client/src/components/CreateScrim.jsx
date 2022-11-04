@@ -9,7 +9,7 @@ import CreateScrimPrizeWheel from "./CreateScrimPrizeWheel";
 import CreateScrimDraft from "./CreateScrimDraft";
 import CreateScrimPlay from "./CreateScrimPlay";
 import CreateScrimRequestAccess from "./CreateScrimRequestAccess";
-import { defaultScrimMode, steps } from "../utils/constants";
+import { DEFAULT_SCRIM_MODE, STEPS } from "../utils/constants";
 import CreateScrimSpectator from "./CreateScrimSpectator";
 import useAuth from "../contexts/Auth";
 import { SocketContext } from "../contexts/Socket";
@@ -20,7 +20,6 @@ const CreateScrim = () => {
   const [canRequestAccess, setCanRequestAccess] = useState(false);
   const [loading, setLoading] = useState(false);
   const socket = useContext(SocketContext);
-  const [isSocketConnected, setIsSocketConnected] = useState(socket.connected);
 
   const { id } = useParams();
   const navigate = useNavigate();
@@ -66,22 +65,22 @@ const CreateScrim = () => {
   }, []);
 
   const handleContinue = async () => {
-    let stepIndex = steps.findIndex((step) => step.name === data.step);
-    const skipToEnd = stepIndex === 0 && data.mode === defaultScrimMode;
-    let step = steps[stepIndex + 1].name;
+    let stepIndex = STEPS.findIndex((step) => step.name === data.step);
+    const skipToEnd = stepIndex === 0 && data.mode !== DEFAULT_SCRIM_MODE;
+    let step = STEPS[stepIndex + 1].name;
 
     try {
       setLoading(true);
       if (skipToEnd) {
-        const result = await API.automateScrim(
-          data.id,
-          data.members,
-          data.mode,
-          data.teamSize
-        );
+        const lastStep = STEPS[STEPS.length - 1].name;
+        const result = await API.updateScrim({ ...data, step: lastStep });
         setData(result.scrim);
       } else {
-        await API.updateScrim({ ...data, step });
+        const result = await API.updateScrim({ ...data, step });
+        setData({
+          ...result.scrim,
+          step,
+        });
       }
     } catch (err) {
       NotificationManager.error("Error", err.response.data.error, 5000);
@@ -89,21 +88,16 @@ const CreateScrim = () => {
       setLoading(false);
     }
 
-    setData({
-      ...data,
-      step,
-    });
-
     setCanContinue(false);
   };
 
   const handleBack = async () => {
     if (data.step !== "pool") {
-      const stepIndex = steps.findIndex((step) => step.name === data.step);
+      const stepIndex = STEPS.findIndex((step) => step.name === data.step);
 
       try {
         setLoading(true);
-        await API.updateScrim({ ...data, step: steps[stepIndex - 1].name });
+        await API.updateScrim({ ...data, step: STEPS[stepIndex - 1].name });
       } catch (err) {
         NotificationManager.error("Error", err.response.data.error, 5000);
       } finally {
@@ -112,7 +106,7 @@ const CreateScrim = () => {
 
       setData({
         ...data,
-        step: steps[stepIndex - 1].name,
+        step: STEPS[stepIndex - 1].name,
       });
       setCanContinue(true);
     }
@@ -137,6 +131,9 @@ const CreateScrim = () => {
     };
 
     try {
+      const memberResponse = await API.updateMembers(members);
+      newData.pool = memberResponse.members;
+
       await API.deleteTeamsForScrim(data.id);
       const teams = members
         .filter((m) => m.isCaptain)
@@ -147,9 +144,6 @@ const CreateScrim = () => {
         }));
       const teamResponse = await API.createTeams(teams);
       newData.teams = teamResponse.teams;
-
-      const memberResponse = await API.updateMembers(members);
-      newData.pool = memberResponse.members;
     } catch (err) {
       NotificationManager.error("Error", err.response.data.error, 5000);
     }
@@ -209,8 +203,8 @@ const CreateScrim = () => {
       )}
       {!loading && data && isHost() && (
         <div>
-          <Step.Group widths={steps.length}>
-            {steps.map((step) => (
+          <Step.Group widths={STEPS.length}>
+            {STEPS.map((step) => (
               <Step key={step.name} active={step.name === data.step}>
                 <Icon name={step.icon}></Icon>
                 <Step.Content>
@@ -240,6 +234,7 @@ const CreateScrim = () => {
           {data.step === "prize-wheel" && (
             <CreateScrimPrizeWheel
               members={data.pool}
+              teams={data.teams}
               draftOrder={data.draftOrder}
               onChange={updatePrizewheel}
             />
