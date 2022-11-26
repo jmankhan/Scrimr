@@ -15,7 +15,7 @@ export class AuthService {
     });
 
     if (existingUser) {
-      throw createHttpError(409, 'This user already exists');
+      throw createHttpError(409, 'This user already exists', { validation: true });
     }
 
     const existingSummoner = await prisma.summoner.findFirst({
@@ -25,12 +25,12 @@ export class AuthService {
     });
 
     if (existingSummoner?.isClaimed) {
-      throw createHttpError(500, 'This summoner is already claimed');
+      throw createHttpError(500, 'This summoner is already claimed', { validation: true });
     }
 
     const riotSummoner = await SummonerService.getSummonerByName(summonerName);
     if (!riotSummoner) {
-      throw createHttpError(404, 'This summoner was not found');
+      throw createHttpError(404, 'This summoner was not found', { validation: true });
     }
     const summoner = await prisma.summoner.upsert({
       where: {

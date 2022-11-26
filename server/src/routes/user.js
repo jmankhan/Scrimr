@@ -46,8 +46,16 @@ router.patch('/profile', withAuth, async function (req, res, next) {
 });
 
 router.post('/register', async function (req, res, next) {
-  const user = await AuthService.register(req.body);
-  if (!process.env.NODE_ENV !== 'dev') {
+  let user;
+  try {
+    user = await AuthService.register(req.body);
+  } catch(err) {
+    console.log('found error: ' + err);
+    next(err);
+    return;
+  }
+
+  if (process.env.NODE_ENV !== 'dev' && user) {
     await sendEmail({
       from: 'jmankhan1@gmail.com',
       to: user.email,

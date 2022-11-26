@@ -1,38 +1,22 @@
 import React from 'react';
-import PropTypes from 'prop-types';
-import { Button, Container, Header, Icon } from 'semantic-ui-react';
-import { Link } from 'react-router-dom';
+import Hero from './Hero';
+import { Flex } from '@chakra-ui/react';
 
 const Home = ({ mobile }) => (
-  <Container text>
-    <Header
-      as='h1'
-      content='Scrimr'
-      style={{
-        fontSize: mobile ? '2em' : '4em',
-        fontWeight: 'normal',
-        marginBottom: 0,
-        marginTop: mobile ? '1.5em' : '3em',
-      }}
+  <Flex
+    direction="column"
+    align="center"
+    maxW={{ xl: "1200px" }}
+    m="0 auto"
+  >
+    <Hero
+      title="Scrimr"
+      subtitle="Get to the next level"
+      image="https://images.unsplash.com/photo-1669389755712-743c368ccc11"
+      ctaText="Create your account now"
+      ctaLink="/register"
     />
-    <Header
-      as='h2'
-      content='Actually have fun in League of Legends.'
-      style={{
-        fontSize: mobile ? '1.5em' : '1.7em',
-        fontWeight: 'normal',
-        marginTop: mobile ? '0.5em' : '1.5em',
-      }}
-    />
-        <Button primary size='huge'>
-            Coming Soon
-            <Icon name='right arrow' />
-        </Button>
-  </Container>
+  </Flex>
 )
-
-Home.propTypes = {
-  mobile: PropTypes.bool,
-}
 
 export default Home;

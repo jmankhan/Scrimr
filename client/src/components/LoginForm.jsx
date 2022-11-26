@@ -1,32 +1,35 @@
 import React, { useState } from "react";
-import {
-  Button,
-  Form,
-  Grid,
-  Header,
-  Icon,
-  Input,
-  Message,
-  Segment,
-} from "semantic-ui-react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
+import { ScrimrLink } from "./ScrimrLink";
 import useAuth from "../contexts/Auth";
+import { handleError } from "../utils";
+import {
+  Alert,
+  AlertIcon,
+  Flex,
+  Box,
+  FormControl,
+  FormLabel,
+  Input,
+  Checkbox,
+  Stack,
+  Link,
+  Button,
+  Heading,
+  Text,
+  useColorModeValue,
+} from '@chakra-ui/react';
 
 const LoginForm = () => {
-  const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [data, setData] = useState(null);
-  const [message, setMessage] = useState("");
+  const [error, setError] = useState();
   const auth = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
-  const handlePasswordReveal = () => {
-    setShowPassword(!showPassword);
-  };
-
-  const handleInput = (e, eventData) => {
-    setData({ ...data, [e.target.name]: eventData.value });
+  const handleInput = (e) => {
+    setData({ ...data, [e.target.name]: e.target.value });
   };
 
   const handleLogin = async () => {
@@ -37,61 +40,66 @@ const LoginForm = () => {
       const from = location.state?.from?.pathname || "/";
       navigate(from, { replace: true });
     } catch (err) {
-      setMessage(err.response.data.message);
+      setError(handleError(err));
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <Grid textAlign="center" style={{ height: "80vh" }} verticalAlign="middle">
-      <Grid.Column style={{ maxWidth: 450 }}>
-        <Header as="h1" textAlign="center">
-          Log In
-        </Header>
-        <Form size="large" error={message !== ""}>
-          <Segment>
-            <Form.Field>
-              <Input
-                name="email"
-                label="Email"
-                type="email"
-                onChange={handleInput}
-              />
-            </Form.Field>
-            <Form.Field>
-              <Input
-                name="password"
-                fluid
-                icon={
-                  <Icon
-                    name={showPassword ? "eye" : "eye slash"}
-                    link
-                    onClick={handlePasswordReveal}
-                  />
-                }
-                label="Password"
-                type={showPassword ? "text" : "password"}
-                onChange={handleInput}
-              />
-            </Form.Field>
-            <Button
-              primary
-              fluid
-              size="large"
-              loading={isLoading}
-              onClick={handleLogin}
-            >
-              Login
-            </Button>
-            <Message error header="Error" content={message} />
-          </Segment>
-        </Form>
-        <Message>
-          New to us? <Link to="/register">Sign Up</Link>
-        </Message>
-      </Grid.Column>
-    </Grid>
+    <Flex
+      minH={'calc(100vh - 4rem)'}
+      align={'center'}
+      justify={'center'}
+      bg={useColorModeValue('gray.50', 'gray.800')}>
+      <Stack spacing={8} mx={'auto'} maxW={'xl'} w={'xl'} py={12} px={6}>
+        <Stack align={'center'}>
+          <Heading fontSize={'4xl'}>Login</Heading>
+        </Stack>
+        <Box
+          rounded={'lg'}
+          bg={useColorModeValue('white', 'gray.700')}
+          boxShadow={'lg'}
+          p={8}>
+          <Stack spacing={4}>
+            {error && error.message && 
+              <Alert status='error'>
+                <AlertIcon />
+                {error.message}
+              </Alert>
+            }
+            <FormControl id="email">
+              <FormLabel>Email address</FormLabel>
+              <Input type="email" name="email" onChange={handleInput} />
+            </FormControl>
+            <FormControl id="password">
+              <FormLabel>Password</FormLabel>
+              <Input type="password" name="password" onChange={handleInput} />
+            </FormControl>
+            <Stack spacing={10}>
+              <Stack
+                direction={{ base: 'column', sm: 'row' }}
+                align={'start'}
+                justify={'space-between'}>
+                <Checkbox>Remember me</Checkbox>
+                <ScrimrLink href="/forgot-password">Forgot password?</ScrimrLink>
+              </Stack>
+              <Button
+                isLoading={isLoading}
+                loadingText="Logging In"
+                bg={'blue.400'}
+                color={'white'}
+                _hover={{
+                  bg: 'blue.500',
+                }}
+                onClick={handleLogin}>
+                Sign in
+              </Button>
+            </Stack>
+          </Stack>
+        </Box>
+      </Stack>
+    </Flex>
   );
 };
 

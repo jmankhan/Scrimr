@@ -47,6 +47,7 @@ const corsOptions = {
   },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
   credentials: true,
+  preflightContinue: true
 };
 
 app.use(cors(corsOptions));
@@ -77,31 +78,29 @@ app.get('*', (req, res) => {
 });
 
 app.use((err, req, res, next) => {
-  console.log('error handler');
-  console.log(JSON.stringify(err));
   let response;
   if (err instanceof createHttpError.HttpError) {
     response = { message: err.message, status: err.status };
-    if (process.env.NODE_ENV === 'development') {
+    if (process.env.NODE_ENV === 'dev') {
       response.stack = err.stack;
     } else {
       console.log(err.stack);
     }
   }
 
-  if (process.env.NODE_ENV !== 'development' && !response) {
+  if (process.env.NODE_ENV !== 'dev' && !response) {
     response = { message: 'Something went wrong', status: 500 };
   }
 
   if (response) {
-    res.send({
+    res.status(err.status).send({
       error: err.name,
       code: parseInt(response.status, 10),
       message: response.message,
       stack: response.stack,
     });
   } else {
-    next(error);
+    next(err);
   }
 });
 

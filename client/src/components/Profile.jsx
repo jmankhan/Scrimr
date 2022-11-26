@@ -95,7 +95,7 @@ const Profile = () => {
                 )}
                 {!user.summoner && (
                   <Form.Group>
-                    <Form.Input label="Summoner" value={user.name ?? null} />
+                    <Form.Input label="Summoner" value={user.name} />
                     <Form.Button
                       label="&nbsp;"
                       variant="label-hidden"

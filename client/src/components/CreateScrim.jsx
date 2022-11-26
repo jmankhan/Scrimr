@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from "react";
+ import React, { useContext, useEffect, useState } from "react";
 import { Button, Icon, Loader, Menu, Step } from "semantic-ui-react";
 import { NotificationManager } from "react-notifications";
 import { useParams, useNavigate } from "react-router-dom";
@@ -12,14 +12,12 @@ import CreateScrimRequestAccess from "./CreateScrimRequestAccess";
 import { DEFAULT_SCRIM_MODE, STEPS } from "../utils/constants";
 import CreateScrimSpectator from "./CreateScrimSpectator";
 import useAuth from "../contexts/Auth";
-import { SocketContext } from "../contexts/Socket";
 
 const CreateScrim = () => {
   const [data, setData] = useState();
   const [canContinue, setCanContinue] = useState(false);
   const [canRequestAccess, setCanRequestAccess] = useState(false);
   const [loading, setLoading] = useState(false);
-  const socket = useContext(SocketContext);
 
   const { id } = useParams();
   const navigate = useNavigate();

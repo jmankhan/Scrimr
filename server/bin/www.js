@@ -24,12 +24,13 @@ app.set('port', port);
  */
 
 var server = http.createServer(app);
+var host = '0.0.0.0' || process.env.HOST;
 
 /**
  * Listen on provided port, on all network interfaces.
  */
 
-server.listen(port);
+server.listen(port, host);
 server.on('error', onError);
 server.on('listening', onListening);
 
@@ -87,56 +88,57 @@ function onListening() {
   var addr = server.address();
   var bind = typeof addr === 'string' ? 'pipe ' + addr : 'port ' + addr.port;
   debug('Listening on ' + bind);
+  console.log('Listening on ' + bind);
 }
 
 // create websocket server on top of http server
-const io = new Server(server, {
-  cors: {
-    origin: ['https://admin.socket.io', 'http://localhost:3000'],
-    credentials: true,
-  },
-  origins: '*',
-});
-io.use(async (socket, next) => {
-  const cookie = socket.handshake.headers.cookie;
-  if (!cookie || cookie == '' || cookie.indexOf('=') === -1) {
-    return next(new Error('Unauthorized'));
-  }
+// const io = new Server(server, {
+//   cors: {
+//     origin: ['https://admin.socket.io', 'http://localhost:3000'],
+//     credentials: true,
+//   },
+//   origins: '*',
+// });
+// io.use(async (socket, next) => {
+//   const cookie = socket.handshake.headers.cookie;
+//   if (!cookie || cookie == '' || cookie.indexOf('=') === -1) {
+//     return next(new Error('Unauthorized'));
+//   }
 
-  const token = cookie.substring(cookie.indexOf('=') + 1);
-  if (token) {
-    try {
-      const { payload } = await jwt.verifyAccessToken(token);
-      socket.userId = payload.id;
-      return next();
-    } catch (err) {
-      next(err);
-    }
-  } else {
-    return next(new Error('Unauthorized'));
-  }
-});
+//   const token = cookie.substring(cookie.indexOf('=') + 1);
+//   if (token) {
+//     try {
+//       const { payload } = await jwt.verifyAccessToken(token);
+//       socket.userId = payload.id;
+//       return next();
+//     } catch (err) {
+//       next(err);
+//     }
+//   } else {
+//     return next(new Error('Unauthorized'));
+//   }
+// });
 
-io.on('connection', (socket) => {
-  if (socket.userId) {
-    const message = `user ${socket.userId} joined`;
-    console.log('message: ' + message);
-    socket.join(socket.userId);
-  }
+// io.on('connection', (socket) => {
+//   if (socket.userId) {
+//     const message = `user ${socket.userId} joined`;
+//     console.log('message: ' + message);
+//     socket.join(socket.userId);
+//   }
 
-  socket.on('disconnect', () => {
-    console.log('disconnect');
-  });
+//   socket.on('disconnect', () => {
+//     console.log('disconnect');
+//   });
 
-  socket.on('error', (err) => {
-    console.log(err);
-    if (err && err.message === 'unauthorized event') {
-      socket.disconnect();
-    }
-  });
+//   socket.on('error', (err) => {
+//     console.log(err);
+//     if (err && err.message === 'unauthorized event') {
+//       socket.disconnect();
+//     }
+//   });
 
-  instrument(io, {
-    auth: false,
-  });
-});
-app.set('io', io);
+//   instrument(io, {
+//     auth: false,
+//   });
+// });
+// app.set('io', io);

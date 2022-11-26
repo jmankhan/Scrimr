@@ -3,23 +3,25 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
-    "@artsy/fresnel": "^3.5.0",
+    "@artsy/fresnel": "^6.1.0",
+    "@chakra-ui/icons": "^2.0.12",
+    "@chakra-ui/react": "^2.4.1",
+    "@emotion/react": "^11.10.5",
+    "@emotion/styled": "^11.10.5",
     "@testing-library/jest-dom": "^5.14.1",
     "@testing-library/react": "^13.0.0",
     "@testing-library/user-event": "^13.2.1",
     "axios": "^0.27.2",
+    "framer-motion": "^7.6.12",
     "lodash.debounce": "^4.0.8",
-    "react": "^18.0.0",
-    "react-dnd": "^16.0.1",
-    "react-dnd-html5-backend": "^16.0.1",
-    "react-dom": "^18.0.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
     "react-hotkeys-hook": "^3.4.6",
     "react-notifications": "^1.7.3",
     "react-rewards": "^2.0.4",
     "react-router-dom": "6",
-    "react-scripts": "5.0.1",
-    "semantic-ui-css": "^2.4.1",
-    "semantic-ui-react": "^2.1.2",
+    "react-scripts": "^5.0.0",
+    "semantic-ui-react": "^2.1.4",
     "socket.io": "^4.5.1",
     "socket.io-client": "^4.5.1",
     "web-vitals": "^2.1.0"
@@ -37,9 +39,9 @@
       "not op_mini all"
     ],
     "development": [
-      "last 1 chrome version",
-      "last 1 firefox version",
-      "last 1 safari version"
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
     ]
   }
 }

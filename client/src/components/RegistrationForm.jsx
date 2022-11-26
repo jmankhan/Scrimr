@@ -1,32 +1,38 @@
 import React, { useState } from "react";
-import {
-  Button,
-  Form,
-  Grid,
-  Header,
-  Icon,
-  Input,
-  Message,
-  Segment,
-} from "semantic-ui-react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import useAuth from "../contexts/Auth";
-import { NotificationManager } from "react-notifications";
+import { ScrimrLink } from "./ScrimrLink";
+import { handleError } from "../utils";
+import {
+  Alert,
+  AlertIcon,
+  Flex,
+  Box,
+  FormControl,
+  FormErrorMessage,
+  FormLabel,
+  Input,
+  InputGroup,
+  InputRightElement,
+  Stack,
+  Button,
+  Heading,
+  Text,
+  useColorModeValue,
+  Link,
+} from '@chakra-ui/react';
+import { ViewIcon, ViewOffIcon } from '@chakra-ui/icons';
 
 const RegistrationForm = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [data, setData] = useState(null);
-  const [message, setMessage] = useState("");
+  const [data, setData] = useState();
+  const [error, setError] = useState();
   const auth = useAuth();
   const navigate = useNavigate();
 
-  const handlePasswordReveal = () => {
-    setShowPassword(!showPassword);
-  };
-
-  const handleInput = (e, eventData) => {
-    setData({ ...data, [e.target.name]: eventData.value });
+  const handleInput = (e) => {
+    setData({ ...data, [e.target.name]: e.target.value });
   };
 
   const handleSubmit = async () => {
@@ -34,78 +40,91 @@ const RegistrationForm = () => {
     try {
       const { email, summonerName, password } = data;
       if (!email || !summonerName || !password) {
-        setMessage("All fields are required");
+        setError({ message: "All fields are required." });
       } else {
         const message = await auth.register({ email, summonerName, password });
-        NotificationManager.success(message);
         navigate("/");
       }
     } catch (err) {
-      setMessage(err.response.data.message);
+      setError(handleError(err));
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <Grid textAlign="center" style={{ height: "80vh" }} verticalAlign="middle">
-      <Grid.Column style={{ maxWidth: 450 }}>
-        <Header as="h1" textAlign="center">
-          Sign Up
-        </Header>
-        <Form size="large" error={!!message}>
-          <Segment stacked>
-            <Form.Field>
-              <Input
-                fluid
-                name="email"
-                label="Email"
-                type="email"
-                onChange={handleInput}
-              />
-            </Form.Field>
-            <Form.Field>
-              <Input
-                name="summonerName"
-                fluid
-                label="Summoner Name"
-                onChange={handleInput}
-              />
-            </Form.Field>
-            <Form.Field>
-              <Input
-                name="password"
-                fluid
-                icon={
-                  <Icon
-                    name={showPassword ? "eye" : "eye slash"}
-                    link
-                    onClick={handlePasswordReveal}
-                  />
-                }
-                iconPosition="right"
-                label="Password"
-                type={showPassword ? "text" : "password"}
-                onChange={handleInput}
-              />
-            </Form.Field>
-            <Button
-              primary
-              fluid
-              size="large"
-              onClick={handleSubmit}
-              loading={isLoading}
-            >
-              Register
-            </Button>
-            <Message error header="Error" content={message} />
-          </Segment>
-        </Form>
-        <Message>
-          <Link to="/login">Login Instead</Link>
-        </Message>
-      </Grid.Column>
-    </Grid>
+    <Flex
+      minH='calc(100vh - 4rem)'
+      align={'center'}
+      justify={'center'}
+      bg={useColorModeValue('gray.50', 'gray.800')}>
+      <Stack spacing={8} mx={'auto'} maxW={'xl'} w={'xl'} py={12} px={6}>
+        <Stack align={'center'}>
+          <Heading fontSize={'4xl'} textAlign={'center'}>
+            Register 
+          </Heading>
+        </Stack>
+        <Box
+          rounded={'lg'}
+          bg={useColorModeValue('white', 'gray.700')}
+          boxShadow={'lg'}
+          p={8}>
+          <Stack spacing={4}>
+            {error && error.message && 
+              <Alert status='error'>
+                <AlertIcon />
+                {error.message}
+              </Alert>
+            }
+            <FormControl id="summonerName" isRequired isInvalid={error?.fields?.summonerName}>
+              <FormLabel>Summoner Name</FormLabel>
+              <Input type="text" name="summonerName" onChange={handleInput}  />
+              {error?.fields?.summonerName && <FormErrorMessage>{error.fields.summonerName}</FormErrorMessage>}
+            </FormControl>
+            <FormControl id="email" isRequired isInvalid={error?.fields?.email}>
+              <FormLabel>Email address</FormLabel>
+              <Input type="email" name="email" onChange={handleInput} />
+              {error?.fields?.email && <FormErrorMessage>{error.fields.email}</FormErrorMessage>}
+            </FormControl>
+            <FormControl id="password" isRequired isInvalid={error?.fields?.password}>
+              <FormLabel>Password</FormLabel>
+              <InputGroup>
+                <Input type={showPassword ? 'text' : 'password'} name="password" onChange={handleInput} />
+                <InputRightElement h={'full'}>
+                  <Button
+                    variant={'ghost'}
+                    onClick={() =>
+                      setShowPassword((showPassword) => !showPassword)
+                    }>
+                    {showPassword ? <ViewIcon /> : <ViewOffIcon />}
+                  </Button>
+                </InputRightElement>
+              </InputGroup>
+              {error?.fields?.password && <FormErrorMessage>{error.fields.password}</FormErrorMessage>}
+            </FormControl>
+            <Stack spacing={10} pt={2}>
+              <Button
+                isLoading={isLoading}
+                loadingText="Submitting"
+                size="lg"
+                bg={'blue.400'}
+                color={'white'}
+                _hover={{
+                  bg: 'blue.500',
+                }}
+                onClick={handleSubmit}>
+                Sign up
+              </Button>
+            </Stack>
+            <Stack pt={6}>
+              <Text align={'center'}>
+                Already a user? <ScrimrLink href="/login">Login</ScrimrLink>
+              </Text>
+            </Stack>
+          </Stack>
+        </Box>
+      </Stack>
+  </Flex>
   );
 };
 

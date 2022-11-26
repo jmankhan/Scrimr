@@ -8,7 +8,6 @@ import React, {
 } from "react";
 import { useLocation } from "react-router-dom";
 import API from "../api";
-import { useNavigate } from "react-router-dom";
 const AuthContext = createContext();
 
 export function AuthProvider({ initialUser, children }) {
@@ -41,8 +40,9 @@ export function AuthProvider({ initialUser, children }) {
     }
   }
 
-  async function register({ email, summonerName, password }) {
+  async function register(props) {
     try {
+      const { email, summonerName, password } = props;
       setLoading(true);
       const response = await API.register(email, summonerName, password);
       setUser(response.user);

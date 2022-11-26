@@ -1,5 +1,5 @@
 import axios from "axios";
-const API_URL = "/api";
+const API_URL = window.location.hostname === 'localhost' ? "http://localhost:3001/api" : "/api";
 
 const client = axios.create({
   baseURL: API_URL,

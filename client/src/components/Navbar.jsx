@@ -1,158 +1,101 @@
-import { createMedia } from '@artsy/fresnel';
-import PropTypes from 'prop-types';
-import React, { Component, useState } from 'react';
-import { useLocation, Link } from 'react-router-dom';
-import { Button, Container, Dropdown, Icon, Menu, Segment, Sidebar, Visibility } from 'semantic-ui-react';
+import {
+  Box,
+  Flex,
+  Avatar,
+  Link,
+  Button,
+  HStack,
+  Menu,
+  MenuButton,
+  MenuList,
+  MenuItem,
+  MenuDivider,
+  useDisclosure,
+  useColorModeValue,
+  Stack,
+  useColorMode,
+  Center,
+} from '@chakra-ui/react';
+import { MoonIcon, SunIcon } from '@chakra-ui/icons';
+import { NavLink } from 'react-router-dom';
 import useAuth from '../contexts/Auth';
+import { ScrimrLink } from './ScrimrLink';
 
-const { MediaContextProvider, Media } = createMedia({
-  breakpoints: {
-    mobile: 0,
-    tablet: 768,
-    computer: 1024,
-  },
-});
-
-const DesktopContainer = (props) => {
-  const [fixed, setShowFixedMenu] = useState(false);
-  const location = useLocation();
-
-  return (
-    <Media greaterThan="mobile" secondary>
-      <Visibility
-        once={false}
-        onBottomPassed={() => setShowFixedMenu(false)}
-        onBottomPassedReverse={() => setShowFixedMenu(true)}
-      >
-        <Segment inverted textAlign="center" style={{ minHeight: 75, padding: '1em 0em' }} vertical>
-          <Menu fixed={fixed ? 'top' : null} inverted={!fixed} pointing={!fixed} secondary={!fixed} size="large">
-            <Container>
-              <Menu.Item active={location.pathname === '/'} as={Link} to="/">
-                Home
-              </Menu.Item>
-              <Menu.Item active={/\/in-house(\/\w)?/.test(location.pathname)} as={Link} to="/in-house">
-                In House
-              </Menu.Item>
-              {/* <Menu.Item active={location.pathname === '/my-scrims'} as={Link} to="/my-scrims">
-                My Scrims
-              </Menu.Item> */}
-              <Menu.Item position="right">
-                {props.user && (
-                  <Dropdown item text={props.user.name}>
-                    <Dropdown.Menu>
-                      <Dropdown.Item as={Link} to="/profile" text="Profile" />
-                      <Dropdown.Item as={Link} to="/logout" text="Logout" />
-                    </Dropdown.Menu>
-                  </Dropdown>
-                )}
-
-                {!props.user && (
-                  <>
-                    <Button as={Link} inverted={!fixed} to="/login">
-                      Log in
-                    </Button>
-                    <Button as={Link} inverted={!fixed} primary={fixed} style={{ marginLeft: '0.5em' }} to="/register">
-                      Sign Up
-                    </Button>
-                  </>
-                )}
-              </Menu.Item>
-            </Container>
-          </Menu>
-        </Segment>
-      </Visibility>
-
-      {props.children}
-    </Media>
-  );
-};
-
-DesktopContainer.propTypes = {
-  children: PropTypes.node,
-  user: PropTypes.object,
-};
-
-class MobileContainer extends Component {
-  state = {};
-
-  handleSidebarHide = () => this.setState({ sidebarOpened: false });
-
-  handleToggle = () => this.setState({ sidebarOpened: true });
-
-  render() {
-    const { children } = this.props;
-    const { sidebarOpened } = this.state;
-
-    return (
-      <Media as={Sidebar.Pushable} at="mobile">
-        <Sidebar.Pushable>
-          <Sidebar
-            as={Menu}
-            animation="overlay"
-            inverted
-            onHide={this.handleSidebarHide}
-            vertical
-            visible={sidebarOpened}
-          >
-            <Menu.Item as="a" active>
-              Home
-            </Menu.Item>
-            <Menu.Item as="a">Work</Menu.Item>
-            <Menu.Item as="a">Company</Menu.Item>
-            <Menu.Item as="a">Careers</Menu.Item>
-            <Menu.Item as="a">Log in</Menu.Item>
-            <Menu.Item as="a">Sign Up</Menu.Item>
-          </Sidebar>
-
-          <Sidebar.Pusher dimmed={sidebarOpened}>
-            <Segment inverted textAlign="center" style={{ minHeight: 75, padding: '1em 0em' }} vertical>
-              <Container>
-                <Menu inverted pointing secondary size="large">
-                  <Menu.Item onClick={this.handleToggle}>
-                    <Icon name="sidebar" />
-                  </Menu.Item>
-                  <Menu.Item position="right">
-                    <Button as="a" inverted>
-                      Log in
-                    </Button>
-                    <Button as="a" inverted style={{ marginLeft: '0.5em' }}>
-                      Sign Up
-                    </Button>
-                  </Menu.Item>
-                </Menu>
-              </Container>
-            </Segment>
-            {children}
-          </Sidebar.Pusher>
-        </Sidebar.Pushable>
-      </Media>
-    );
-  }
-}
-
-MobileContainer.propTypes = {
-  children: PropTypes.node,
-};
-
-const ResponsiveContainer = ({ children, user }) => (
-  /* Heads up!
-   * For large applications it may not be best option to put all page into these containers at
-   * they will be rendered twice for SSR.
-   */
-  <MediaContextProvider>
-    <DesktopContainer user={user}>{children}</DesktopContainer>
-    <MobileContainer user={user}>{children}</MobileContainer>
-  </MediaContextProvider>
+const NavbarLink = ({ children, href }) => (
+  <NavLink to={href}>
+    <Link
+      as='span'
+      px={2}
+      py={1}
+      rounded={'md'}
+      _hover={{
+        textDecoration: 'none',
+        bg: useColorModeValue('gray.200', 'gray.700'),
+      }}>
+      {children}
+    </Link>
+  </NavLink>
 );
 
-ResponsiveContainer.propTypes = {
-  user: PropTypes.object,
-  children: PropTypes.node,
-};
-
-const NavBar = (props) => {
+export default function Nav() {
+  const { colorMode, toggleColorMode } = useColorMode();
   const auth = useAuth();
-  return <ResponsiveContainer {...props} user={auth.value.user}></ResponsiveContainer>;
-};
+  const isLoggedIn = auth?.value?.user?.id ?? false;
+  const pages = [{ label: 'In-House', value: '/in-house'}];
 
-export default NavBar;
+  return (
+    <Box bg={useColorModeValue('gray.100', 'gray.900')} px={4}>
+      <Flex h={16} alignItems={'center'} justifyContent={'space-between'}>
+        <HStack spacing={8} alignItems={'center'}>
+          <Box>Logo</Box>
+          <HStack
+            as={'nav'}
+            spacing={4}
+            display={{ base: 'none', md: 'flex' }}>
+            {pages.map(page => (
+              <NavbarLink key={page.value} href={page.value}>{page.label}</NavbarLink>
+            ))}
+          </HStack>
+        </HStack>
+
+        <Flex alignItems={'center'}>
+          <Stack direction={'row'} spacing={7}>
+            <Button onClick={toggleColorMode}>
+              {colorMode === 'light' ? <MoonIcon /> : <SunIcon />}
+            </Button>
+            <Menu>
+              <MenuButton
+                as={Button}
+                rounded={'full'}
+                variant={'link'}
+                cursor={'pointer'}
+                minW={0}>
+                <Avatar
+                  size={'sm'}
+                  src={'https://avatars.dicebear.com/api/male/username.svg'}
+                />
+              </MenuButton>
+              <MenuList alignItems={'center'}>
+                <br />
+                <Center>
+                  <Avatar
+                    size={'2xl'}
+                    src={'https://avatars.dicebear.com/api/male/username.svg'}
+                  />
+                </Center>
+                <br />
+                <Center>
+                  <p>{auth?.value?.user?.name}</p>
+                </Center>
+                <br />
+                <MenuDivider />
+                <MenuItem>Settings</MenuItem>
+                <MenuItem>{isLoggedIn ? <ScrimrLink negative href="/logout">Logout</ScrimrLink> : <ScrimrLink href="/login">Login</ScrimrLink>}</MenuItem>
+              </MenuList>
+            </Menu>
+          </Stack>
+        </Flex>
+      </Flex>
+    </Box>
+  );
+}

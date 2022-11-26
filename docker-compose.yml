@@ -1,0 +1,50 @@
+version: '3'
+services:
+  postgres:
+      image: postgres:latest
+      container_name: scrimr-postgres
+      hostname: postgres
+      ports:
+          - "5432:5432"
+      environment:
+          POSTGRES_USER: scrimr_admin
+          POSTGRES_PASSWORD: scrimr_password
+          POSTGRES_DB: scrimr
+      volumes:
+          - ./postgresql/data:/var/lib/postgresql/data
+      restart: unless-stopped
+  server:
+      image:
+          server
+      build:
+          context: ./server
+          dockerfile: Dockerfile.dev
+      volumes:
+          - /app/node_modules
+          - ./server/src:/app/src
+      ports:
+          - "3001:3001"
+      links:
+          - postgres
+      depends_on:
+          - postgres
+      env_file: ./server/.env
+      restart: always
+  client: 
+      image:
+          client
+      build:
+          context: ./client
+          dockerfile: Dockerfile.dev
+      volumes:
+          - /app/node_modules
+          - ./client:/app
+      ports:
+          - "3000:3000"
+      environment:
+        CHOKIDAR_USEPOLLING: true
+        WATCHPACK_POLLING: true
+      links:
+          - server
+      depends_on:
+          - server        
