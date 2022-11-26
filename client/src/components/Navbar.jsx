@@ -72,7 +72,7 @@ export default function Nav() {
                 minW={0}>
                 <Avatar
                   size={'sm'}
-                  src={'https://avatars.dicebear.com/api/male/username.svg'}
+                  src={`https://avatars.dicebear.com/api/bottts/${isLoggedIn ? auth.value.user.id : Math.random()}.svg`}
                 />
               </MenuButton>
               <MenuList alignItems={'center'}>
@@ -80,7 +80,7 @@ export default function Nav() {
                 <Center>
                   <Avatar
                     size={'2xl'}
-                    src={'https://avatars.dicebear.com/api/male/username.svg'}
+                    src={`https://avatars.dicebear.com/api/bottts/${isLoggedIn ? auth.value.user.id : Math.random()}.svg`}
                   />
                 </Center>
                 <br />

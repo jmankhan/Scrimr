@@ -95,6 +95,11 @@ const LoginForm = () => {
                 onClick={handleLogin}>
                 Sign in
               </Button>
+              <Stack pt={6}>
+                <Text align={'center'}>
+                  Trying to register instead? <ScrimrLink href="/register">Register</ScrimrLink>
+                </Text>
+              </Stack>
             </Stack>
           </Stack>
         </Box>
