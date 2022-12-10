@@ -1,5 +1,5 @@
-import { queryUser } from '../services';
-import { SCRIMREQUEST_STATUS, SOCKET_EVENTS } from '../utils/constants';
+import { queryUser } from '../services/index.js';
+import { SCRIMREQUEST_STATUS, SOCKET_EVENTS } from '../utils/constants.js';
 
 export const notifyUser = (req, event, data) => {
   const io = req.app.get('io');

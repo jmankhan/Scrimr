@@ -9,6 +9,10 @@ export const chunkMembers = (array, chunkSize, propertyName = "members") => {
   }, []);
 };
 
+export const getRandomElement = (arr) => {
+  return arr[Math.floor(Math.random()*arr.length)];
+};
+
 export const handleError = (err) => {
   if (!err) {
     return 'Critical error';

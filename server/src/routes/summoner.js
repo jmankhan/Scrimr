@@ -2,7 +2,7 @@ import express from 'express';
 const router = express.Router();
 
 import prisma from '../utils/prisma.js';
-import { AuthService, queryUser, SummonerService } from '../services';
+import { AuthService, queryUser, SummonerService } from '../services/index.js';
 import withAuth from '../middlewares/auth.js';
 import createHttpError from 'http-errors';
 

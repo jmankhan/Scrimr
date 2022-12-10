@@ -11,6 +11,7 @@ import Logout from "./components/Logout";
 import InHouseLanding from "./components/InHouseLanding";
 import Profile from "./components/Profile";
 import ConfirmCode from "./components/ConfirmCode";
+import CreateScrimContainer from "./components/create-scrim/CreateScrimContainer";
 import { Dimmer, Loader } from "semantic-ui-react";
 import API from "./api/index.js";
 
@@ -73,7 +74,7 @@ function App() {
               path="/in-house/create-scrim"
               element={
                 <PrivateRoute>
-                  <CreateScrim />
+                  <CreateScrimContainer />
                 </PrivateRoute>
               }
             />
@@ -81,7 +82,7 @@ function App() {
               path="/in-house/create-scrim/:id"
               element={
                 <PrivateRoute>
-                  <CreateScrim />
+                  <CreateScrimContainer />
                 </PrivateRoute>
               }
             />

@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "Scrim" ADD COLUMN     "numTeams" INTEGER NOT NULL DEFAULT 2,
+ALTER COLUMN "mode" SET DEFAULT 'manual';

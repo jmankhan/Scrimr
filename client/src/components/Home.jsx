@@ -6,7 +6,7 @@ const Home = ({ mobile }) => (
   <Flex
     direction="column"
     align="center"
-    maxW={{ xl: "1200px" }}
+    w='100%'
     m="0 auto"
   >
     <Hero

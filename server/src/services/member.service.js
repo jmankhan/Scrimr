@@ -12,3 +12,28 @@ export const queryMember = (memberId) => {
     },
   });
 };
+
+export const queryMembersByScrim = (scrimId) => {
+  return prisma.member.findMany({
+    where: {
+      scrimId: Number(scrimId),
+    },
+    include: {
+      summoner: true,
+      team: true,
+      scrim: true
+    },
+  });
+}
+
+export const createKey = (summonerId, scrimId) => {
+  return scrimId + '_' + decodeURIComponent(summonerId);
+}
+
+export const createMember = (summonerId, scrimId) => {
+  return ({
+    summonerId: decodeURIComponent(summonerId),
+    scrimId: scrimId,
+    uniqueKey: createKey(summonerId, scrimId)
+  })
+}

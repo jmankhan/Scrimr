@@ -1,12 +1,12 @@
 import express from 'express';
 const router = express.Router();
 
-import prisma from '../utils/prisma';
+import prisma from '../utils/prisma.js';
 import createHttpError from 'http-errors';
 import withAuth from '../middlewares/auth.js';
 import { validateHost, validateScrim } from '../utils/validators.js';
 import { SCRIMREQUEST_TYPES, SCRIM_MODE, SOCKET_EVENTS } from '../utils/constants.js';
-import { automateScrim, createScrimRequest, createTeams, notifyUser, queryScrim, updateScrim } from '../services';
+import { automateScrim, createScrimRequest, createTeams, notifyUser, queryScrim, updateScrim } from '../services/index.js';
 
 router.get('/', withAuth, async (req, res, next) => {
   const scrimId = req.params.id;
@@ -68,7 +68,9 @@ router.post('/', withAuth, async (req, res, next) => {
       },
     })
     .catch(next);
-  res.status(200).json({ teams: [], pool: [], ...result });
+
+  const scrim = await queryScrim(result.id).catch(next);
+  res.status(200).json(scrim);
 });
 
 router.post('/:id/join', withAuth, async (req, res, next) => {

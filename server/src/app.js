@@ -79,12 +79,13 @@ app.get('*', (req, res) => {
 
 app.use((err, req, res, next) => {
   let response;
+  console.log('entered error handler');
   if (err instanceof createHttpError.HttpError) {
     response = { message: err.message, status: err.status };
     if (process.env.NODE_ENV === 'dev') {
       response.stack = err.stack;
     } else {
-      console.log(err.stack);
+      console.error(err.stack);
     }
   }
 

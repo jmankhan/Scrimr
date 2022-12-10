@@ -12,15 +12,8 @@ router.get('/', async (req, res, next) => {
         mode: 'insensitive',
       },
     },
+    take: 4
   });
-
-  // allow exact matches to be selectable options
-  if (!records.find((r) => r.name === value)) {
-    records.unshift({
-      id: value,
-      name: value,
-    });
-  }
 
   res.json({ results: records });
 });

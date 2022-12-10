@@ -43,8 +43,9 @@ router.post('/', withAuth, async (req, res, next) => {
 router.patch('/', withAuth, async (req, res, next) => {
   const userId = req.userId;
   const scrimIds = new Set(req.body.map((team) => team.scrimId));
+  const teamIds = req.body.map(team => team.id);
 
-  if (scrimIds.size() !== 1) {
+  if (scrimIds.size !== 1) {
     next(new createHttpError.BadRequest('All teams must be for the same scrim'));
   }
 
@@ -70,8 +71,10 @@ router.patch('/', withAuth, async (req, res, next) => {
       })
     );
   });
-  const teams = await Promise.all(updates).catch(next);
-  res.status(200).json({ teams });
+  await Promise.all(updates).catch(next);
+  const updatedTeams = await queryTeams(teamIds);
+  console.log(teamIds + ' - ' + updatedTeams.length);
+  res.status(200).json({ teams: updatedTeams });
 });
 
 router.delete('/', withAuth, async (req, res, next) => {
@@ -79,7 +82,7 @@ router.delete('/', withAuth, async (req, res, next) => {
   const scrimId = req.query.scrimId;
 
   if (!scrimId) {
-    next(new createHttpError.BadRequest('scrimId is required'));
+    next(new createHttpError.BadRequest('Invalid scrim id'));
   }
 
   if (!validateHost(userId, scrimId)) {

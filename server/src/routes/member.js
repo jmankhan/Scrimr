@@ -3,95 +3,57 @@ const router = express.Router();
 import prisma from '../utils/prisma.js';
 
 import withAuth from '../middlewares/auth.js';
-import { SummonerService } from '../services/';
 import createHttpError from 'http-errors';
-import { queryMember } from '../services/member.service.js';
+import { createKey, createMember, queryMember, queryMembersByScrim } from '../services/member.service.js';
+import { validateHost } from '../utils/validators.js';
 
 router.post('/', withAuth, async (req, res, next) => {
-  const { summonerId, scrimId } = req.body;
- 
-  console.log('posting with params: ' + summonerId + ' - ' + scrimId);
-  const safeSummonerId = decodeURI(summonerId);
-  console.log('safeSummonerId: ' + safeSummonerId);
-  let summoner = await prisma.summoner.findUnique({
+  const { summonerIds, scrimId } = req.body;
+
+  if (!summonerIds || !scrimId || !Array.isArray(summonerIds) || summonerIds.length < 1) {
+    throw new createHttpError.BadRequest('Invalid members');
+  }
+
+  const safeSummonerIds = summonerIds.map(id => decodeURI(id));
+  const existingSummoners = await prisma.summoner.findMany({
     where: {
-      id: safeSummonerId,
+      id: {
+        in: safeSummonerIds
+      }
+    }
+  });
+
+  if (existingSummoners.length !== summonerIds.length) {
+    throw new createHttpError.BadRequest('Some summoners could not be found');
+  }
+
+  const uniqueKeys = summonerIds.map(id => createKey(id, scrimId));
+  const existingMembers = await prisma.member.findMany({
+    where: {
+      uniqueKey: {
+        in: uniqueKeys
+      }
     },
   });
 
-  console.log('summoner ' + summoner);
-  if (!summoner) {
-    summoner = await prisma.summoner.findFirst({
-      where: {
-        name: {
-          contains: safeSummonerId.replace(/[\\$'"]/g, '\\$&'),
-          mode: 'insensitive',
-        },
-      },
-    });
-    console.log('tried to find summoner ' + summoner);
-  }
+  const existingMemberKeys = new Set(existingMembers.map(m => m.uniqueKey));
+  const recordsToCreate = safeSummonerIds
+    .map(id => createMember(id, scrimId))
+    .filter(member => !existingMemberKeys.has(member.uniqueKey));
 
-  if (!summoner) {
-    console.log('summoner not found, trying to query riot api - ' + safeSummonerId);
-    const summonerResponse = await SummonerService.getSummonerByName(safeSummonerId).catch(next);
-    console.log('riot response ' + JSON.stringify(summonerResponse));
-    summoner = await prisma.summoner
-      .create({
-        data: {
-          ...summonerResponse,
-        },
-      })
-      .catch(next);
-    console.log('found riot summoner ' + summoner);
-  }
-
-  const memberExists = await prisma.member.findFirst({
-    where: {
-      AND: [
-        {
-          summonerId: {
-            equals: safeSummonerId,
-          },
-        },
-        {
-          scrimId: {
-            equals: Number(scrimId),
-          },
-        },
-      ],
-    },
-  });
-
-  console.log('member exists? ' + memberExists != null);
-  if (memberExists) {
-    return next(new createHttpError.BadRequest('This member is already in the pool'));
-  }
-
-  console.log('creating member with ' + summoner.id + ' - ' + scrimId);
-  const member = await prisma.member
-    .create({
-      data: {
-        summonerId: summoner.id,
-        scrimId: Number(scrimId),
-      },
+  const result = await prisma.member.createMany({
+      data: recordsToCreate,
+      skipDuplicates: true
     })
     .catch(next);
 
-  res.status(200).json({
-    member,
-  });
+  const allMembers = await queryMembersByScrim(scrimId);
+  res.status(200).json({ members: allMembers });
 });
 
 router.get('/:id', withAuth, async (req, res, next) => {
   const memberId = req.params.id;
-
   const member = await queryMember(memberId).catch(next);
-
-  if (!member) {
-    next(new createHttpError.NotFound());
-  }
-
   res.status(200).json({ member });
 });
 
@@ -107,6 +69,31 @@ router.delete('/:id', withAuth, async (req, res, next) => {
 
   res.sendStatus(200);
 });
+
+router.delete('/', withAuth, async (req, res, next) => {
+  const userId = req.userId;
+  const scrimId = req.query.scrimId;
+
+  if (!scrimId) {
+    next(new createHttpError.BadRequest('Invalid scrim id'));
+  }
+
+  if (!validateHost(userId, scrimId)) {
+    next(new createHttpError.Unauthorized());
+  }
+
+  await prisma.member
+    .deleteMany({
+      where: {
+        scrimId: Number(req.query.scrimId),
+      },
+    })
+    .catch(next);
+
+  res.status(200).json({
+    message: 'Success',
+  });
+})
 
 router.put('/:id', withAuth, async (req, res, next) => {
   const memberId = req.params.id;
@@ -165,5 +152,6 @@ router.patch('/', withAuth, async (req, res, next) => {
 
   res.json({ members: updatedMembers });
 });
+
 
 export default router;

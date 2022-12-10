@@ -12,12 +12,8 @@ class API {
     await client.get(`/user/confirm?code=${code}`);
   };
 
-  static createMember = async (summonerId, scrimId) => {
-    const member = {
-      summonerId,
-      scrimId,
-    };
-    const response = await client.post("/member", { ...member });
+  static createMembers = async (summonerIds, scrimId) => {
+    const response = await client.post("/member", { summonerIds, scrimId });
     return response.data;
   };
 
@@ -31,6 +27,11 @@ class API {
     return response.data;
   };
 
+  static createSummoner = async (name) => {
+    const response = await client.post(`/summoner`, { name });
+    return response.data;
+  }
+
   static createTeams = async (teams) => {
     const response = await client.post("/team", [...teams]);
     return response.data;
@@ -40,6 +41,11 @@ class API {
     const response = await client.delete(`/member/${id}`);
     return response.data;
   };
+
+  static deleteMembersForScrim = async (scrimId) => {
+    const response = await client.delete(`/member?scrimId={scrimId}`);
+    return response.data;
+  }
 
   static deleteTeamsForScrim = async (scrimId) => {
     const response = await client.delete(`/team?scrimId=${scrimId}`);

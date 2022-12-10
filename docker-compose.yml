@@ -2,7 +2,7 @@ version: '3'
 services:
   postgres:
       image: postgres:latest
-      container_name: scrimr-postgres
+      container_name: postgres
       hostname: postgres
       ports:
           - "5432:5432"
@@ -13,6 +13,8 @@ services:
       volumes:
           - ./postgresql/data:/var/lib/postgresql/data
       restart: unless-stopped
+      networks:
+        - scrimr
   server:
       image:
           server
@@ -28,8 +30,9 @@ services:
           - postgres
       depends_on:
           - postgres
+      networks:
+        - scrimr
       env_file: ./server/.env
-      restart: always
   client: 
       image:
           client
@@ -48,3 +51,6 @@ services:
           - server
       depends_on:
           - server        
+networks:
+  scrimr:
+    driver: bridge

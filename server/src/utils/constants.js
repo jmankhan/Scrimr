@@ -1,7 +1,7 @@
 export const SCRIM_MODE = Object.freeze({
-  MANUAL: 'MANUAL',
-  RANDOM: 'RANDOM',
-  BEST_RANK: 'BEST_RANK',
+  MANUAL: 'manual',
+  RANDOM: 'random',
+  BEST_RANK: 'best_rank',
   // WORST_RANK: 'WORST_RANK',
 });
 

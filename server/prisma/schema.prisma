@@ -20,6 +20,7 @@ model Member {
   scrim       Scrim?    @relation(fields: [scrimId], references: [id])
   scrimId     Int?
   isCaptain   Boolean   @default(false)
+  uniqueKey   String    @unique
 }
 
 model Team {
@@ -50,11 +51,12 @@ model Scrim {
   host        User           @relation(fields: [hostId], references: [id])
   hostId      Int
   isPrivate   Boolean        @default(true)
-  mode        String         @default("MANUAL")
+  mode        String         @default("manual")
   pool        Member[]
   step        String         @default("pool")
   teams       Team[]
   teamSize    Int            @default(5)
+  numTeams    Int            @default(2)
   requests    ScrimRequest[]
 }
 

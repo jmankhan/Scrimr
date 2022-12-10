@@ -1,7 +1,8 @@
 import {
+  Avatar,
   Box,
   Flex,
-  Avatar,
+  Image,
   Link,
   Button,
   HStack,
@@ -10,7 +11,6 @@ import {
   MenuList,
   MenuItem,
   MenuDivider,
-  useDisclosure,
   useColorModeValue,
   Stack,
   useColorMode,
@@ -20,6 +20,7 @@ import { MoonIcon, SunIcon } from '@chakra-ui/icons';
 import { NavLink } from 'react-router-dom';
 import useAuth from '../contexts/Auth';
 import { ScrimrLink } from './ScrimrLink';
+import logo from '../assets/logo.png';
 
 const NavbarLink = ({ children, href }) => (
   <NavLink to={href}>
@@ -31,7 +32,8 @@ const NavbarLink = ({ children, href }) => (
       _hover={{
         textDecoration: 'none',
         bg: useColorModeValue('gray.200', 'gray.700'),
-      }}>
+      }}
+      cursor='pointer'>
       {children}
     </Link>
   </NavLink>
@@ -41,13 +43,14 @@ export default function Nav() {
   const { colorMode, toggleColorMode } = useColorMode();
   const auth = useAuth();
   const isLoggedIn = auth?.value?.user?.id ?? false;
+  const avatarSeed = isLoggedIn ? auth.value.user.id : Math.random();
   const pages = [{ label: 'In-House', value: '/in-house'}];
 
   return (
     <Box bg={useColorModeValue('gray.100', 'gray.900')} px={4}>
       <Flex h={16} alignItems={'center'} justifyContent={'space-between'}>
         <HStack spacing={8} alignItems={'center'}>
-          <Box>Logo</Box>
+          <NavLink to='/'><Image src={logo} alt='logo' boxSize='3rem' /></NavLink>
           <HStack
             as={'nav'}
             spacing={4}
@@ -72,7 +75,7 @@ export default function Nav() {
                 minW={0}>
                 <Avatar
                   size={'sm'}
-                  src={`https://avatars.dicebear.com/api/bottts/${isLoggedIn ? auth.value.user.id : Math.random()}.svg`}
+                  src={`https://avatars.dicebear.com/api/bottts/${avatarSeed}.svg`}
                 />
               </MenuButton>
               <MenuList alignItems={'center'}>
@@ -80,7 +83,7 @@ export default function Nav() {
                 <Center>
                   <Avatar
                     size={'2xl'}
-                    src={`https://avatars.dicebear.com/api/bottts/${isLoggedIn ? auth.value.user.id : Math.random()}.svg`}
+                    src={`https://avatars.dicebear.com/api/bottts/${avatarSeed}.svg`}
                   />
                 </Center>
                 <br />

@@ -7,7 +7,6 @@ export class SummonerService {
   static async getSummonerByName(name) {
     try {
       const riotResponse = await riotApi.Summoner.getByName(name, twisted.Constants.Regions.AMERICA_NORTH);
-      console.log('response ' + JSON.stringify(riotResponse));
       return await SummonerService.getSummonerByResponse(riotResponse.response);
     } catch (err) {
       console.log('riot api err - ' + err);

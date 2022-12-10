@@ -3,7 +3,7 @@ const router = express.Router();
 
 import prisma from '../utils/prisma.js';
 import withAuth from '../middlewares/auth.js';
-import { createScrimRequest, notifyUser } from '../services';
+import { createScrimRequest, notifyUser } from '../services/index.js';
 import { SCRIMREQUEST_STATUS, SOCKET_EVENTS } from '../utils/constants.js';
 import createHttpError from 'http-errors';
 

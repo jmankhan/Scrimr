@@ -2,12 +2,13 @@ FROM node:16.18.1-alpine
 EXPOSE 3001
 RUN mkdir -p /app/src
 WORKDIR /app
-COPY package*.json ./
-COPY prisma ./prisma/
 COPY . .
-ADD https://github.com/ufoscout/docker-compose-wait/releases/download/2.5.0/wait /wait
-RUN chmod +x /wait
-CMD /wait && cd prisma && npm i && npx prisma migrate dev && cd .. && npm run dev
+# ADD https://github.com/ufoscout/docker-compose-wait/releases/download/2.5.0/wait /wait
+# RUN chmod +x /wait
+# CMD /wait && 
+# CMD cd prisma && npm i && npx prisma migrate dev && cd .. && npm run dev
 # RUN npx prisma generate
 # RUN npx prisma migrate dev
-# CMD ["npm", "run", "dev"]
+RUN npm install
+RUN npm install pm2 -g
+CMD ["pm2-runtime", "start", "ecosystem.config.cjs"]

@@ -2,7 +2,7 @@ import express from 'express';
 const router = express.Router();
 import withAuth from '../middlewares/auth.js';
 import { sendEmail } from '../utils/email.js';
-import { AuthService, queryUser } from '../services';
+import { AuthService, queryUser } from '../services/index.js';
 import prisma from '../utils/prisma.js';
 import createHttpError from 'http-errors';
 

@@ -1,5 +1,5 @@
-import prisma from '../utils/prisma';
-import { SCRIMREQUEST_STATUS } from '../utils/constants';
+import prisma from '../utils/prisma.js';
+import { SCRIMREQUEST_STATUS } from '../utils/constants.js';
 
 export const createScrimRequest = async (scrimId, userId, type) => {
   return prisma.ScrimRequest.create({

@@ -1,7 +1,7 @@
-import prisma from '../utils/prisma';
-import { SCRIM_MODE } from '../utils/constants';
+import prisma from '../utils/prisma.js';
+import { SCRIM_MODE } from '../utils/constants.js';
 import createHttpError from 'http-errors';
-import { createTeams, queryTeams } from './team.service';
+import { createTeams, queryTeams } from './team.service.js';
 
 export const automateScrim = async (scrimId, pool, mode, teamSize) => {
   if (
@@ -72,7 +72,7 @@ export const automateScrim = async (scrimId, pool, mode, teamSize) => {
   return await queryScrim(scrimId);
 };
 
-export const updateScrim = async ({ id, draftOrder, mode, sideOrder, step, teamSize, pool, teams }) => {
+export const updateScrim = async ({ id, draftOrder, mode, numTeams, sideOrder, step, teamSize, pool, teams }) => {
   return await prisma.scrim.update({
     where: {
       id: Number(id),
@@ -80,6 +80,7 @@ export const updateScrim = async ({ id, draftOrder, mode, sideOrder, step, teamS
     data: {
       draftOrder,
       mode,
+      numTeams,
       sideOrder,
       step,
       teamSize,

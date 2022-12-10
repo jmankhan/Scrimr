@@ -3,13 +3,13 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "preinstall": "npm i nodemon -g",
     "start": "node --experimental-specifier-resolution=node ./bin/www",
-    "dev": "npx nodemon -L --exec \"node --experimental-specifier-resolution=node\" ./bin/www",
+    "dev": "npx pm2 start ./bin/www.js",
+    "migrate": "npx prisma migrate dev",
     "debug": "node --experimental-specifier-resolution=node --inspect ./bin/www"
   },
   "engines": {
-    "node": "14.7.0"
+    "node": "16.18.1"
   },
   "type": "module",
   "dependencies": {
@@ -32,12 +32,12 @@
     "jsonwebtoken": "^8.5.1",
     "morgan": "~1.9.1",
     "nodemailer": "^6.7.6",
+    "pm2": "^5.2.2",
     "swagger-ui-express": "^4.3.0",
     "twisted": "^1.46.8",
     "yamljs": "^0.3.0"
   },
   "devDependencies": {
     "prisma": "^4.6.1"
-  },
-  "proxy": "http://localhost:3001"
+  }
 }

@@ -3,7 +3,7 @@ import createHttpError from 'http-errors';
 import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
 import jwt from '../utils/jwt.js';
-import { SummonerService } from './';
+import { SummonerService } from './summoner.service.js';
 
 export class AuthService {
   static async register(data) {
