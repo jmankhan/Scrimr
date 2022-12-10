@@ -44,7 +44,7 @@ export default function Nav() {
   const auth = useAuth();
   const isLoggedIn = auth?.value?.user?.id ?? false;
   const avatarSeed = isLoggedIn ? auth.value.user.id : Math.random();
-  const pages = [{ label: 'In-House', value: '/in-house'}];
+  const pages = [{ label: 'In-House', value: '/in-house/create-scrim'}];
 
   return (
     <Box bg={useColorModeValue('gray.100', 'gray.900')} px={4}>
