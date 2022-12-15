@@ -10,7 +10,7 @@ import {
   VStack
 } from '@chakra-ui/react';
 import Member from './Member';
-import { MemberGroup } from './MemberGroup';
+import MemberGroup from './MemberGroup';
 
 const Draft = ({ pool, teams, onChange }) => {
   const [members, setMembers] = useState(pool.filter(m => !m.isCaptain & m.teamId != null));

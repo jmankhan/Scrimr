@@ -3,7 +3,6 @@ import PropTypes from 'prop-types';
 import API from '../../api';
 import {
   Box,
-  Divider,
   Flex,
   HStack,
   Image,
@@ -14,6 +13,7 @@ import {
   Modal,
   ModalBody,
   ModalOverlay,
+  Spinner,
   Text,
   VisuallyHidden,
   VStack,
@@ -29,6 +29,34 @@ import { useOutsideClick } from '../../hooks/useOutsideClick';
 
 const ACTION_KEY_DEFAULT = ['Ctrl', 'Control'];
 const ACTION_KEY_APPLE = ['⌘', 'Command'];
+
+const AutoCompleteResult = ({ bg, hoverBg, label, rank, onSelect }) => {
+  const [imageSrc, title] = useRankImages(rank)
+
+  return (
+    <ListItem 
+      _hover={{ bg: hoverBg }}
+      bg={bg}
+      display="flex"
+      mt={2}
+      py={2}
+      borderRadius='lg'
+      minH={16}
+      px={4}
+      alignItems="center"
+      cursor="pointer"
+      onClick={onSelect}>
+        <Flex ml={4}>
+          {
+            imageSrc ? 
+            <Image src={imageSrc} alt={title} boxSize='2rem' sx={{ display: 'inline-block' }} mr={3} /> : 
+            <Box w='2rem' h='2rem' mr={3}>&nbsp;</Box>
+          }
+          <Text sx={{ display: 'inline' }}>{label}</Text>
+        </Flex>
+    </ListItem>
+  );
+}
 
 const AutoComplete = ({ label, placeholder, onSelect }) => {
   const [options, setOptions] = useState([]);
@@ -62,21 +90,18 @@ const AutoComplete = ({ label, placeholder, onSelect }) => {
       try {
         setLoading(true);
         const response = await API.search(v);
-        const result = response.results.map(r => {
-          const [imageSrc, title] = useRankImages(r.rank);
-          return {
-            label: r.name,
-            imageSrc: imageSrc,
-            title: title,
-            value: r.id,
-            summoner: r
-          }
-        }) ?? [];
+        const result = response.results.map(r => ({
+          label: r.name,
+          imageSrc: null,
+          title: r.rank,
+          value: r.id,
+          summoner: r
+        }));
 
         result.push({ label: v, value: null });
         setOptions(result);
       } catch(err) {
-        toast({ title: 'Error', description: handleError(err).message });
+        toast({ description: handleError(err).message });
       } finally {
         setLoading(false);
       }
@@ -129,7 +154,7 @@ const AutoComplete = ({ label, placeholder, onSelect }) => {
   useOutsideClick(containerRef.current, () => {
     inputRef?.current?.blur();
     setOptions([]);
-   });
+  });
  
 
   const handleAdd = async (name) => {
@@ -150,6 +175,8 @@ const AutoComplete = ({ label, placeholder, onSelect }) => {
     setOptions([]);
     setValue(null);
   }
+
+  const colorModeValues = useColorModeValue('gray.200', 'gray.600');
 
   return (
     <VStack w="100%" ref={containerRef}>
@@ -189,6 +216,7 @@ const AutoComplete = ({ label, placeholder, onSelect }) => {
               Press {actionKey[1] + ' and K'} to search.
             </VisuallyHidden>
           <HStack display={['none', 'none', 'none', 'flex']}>
+            {loading && <Spinner />}
             <Kbd as='p' rounded='2px'>
               <chakra.div
                   as='abbr'
@@ -229,27 +257,13 @@ const AutoComplete = ({ label, placeholder, onSelect }) => {
             rounded='md'>
               <List>
                 {options.map((option, index) => (
-                  <ListItem key={option.value}
-                    _hover={{ bg: useColorModeValue('gray.200', 'gray.600') }}
-                    bg={selectedOptionIndex === index ? useColorModeValue('gray.200', 'gray.600') : null}
-                    display="flex"
-                    mt={2}
-                    py={2}
-                    borderRadius='lg'
-                    minH={16}
-                    px={4}
-                    alignItems="center"
-                    cursor="pointer"
-                    onClick={() => handleSelect(options[index])}>
-                      <Flex ml={4}>
-                        {
-                          option.imageSrc ? 
-                          <Image src={option.imageSrc} alt={option.iconTitle} boxSize='2rem' sx={{ display: 'inline-block' }} mr={3} /> : 
-                          <Box w='2rem' h='2rem' mr={3}>&nbsp;</Box>
-                        }
-                        <Text sx={{ display: 'inline' }}>{option.label}</Text>
-                      </Flex>
-                  </ListItem>
+                  <AutoCompleteResult 
+                    key={option.value}
+                    bg={selectedOptionIndex === index ? colorModeValues : null}
+                    hoverBg={colorModeValues}
+                    label={option.label}
+                    rank={option?.summoner?.rank ?? -1}
+                    onSelect={() => handleSelect(options[index])} />
                 ))}
               </List>
             </chakra.div>

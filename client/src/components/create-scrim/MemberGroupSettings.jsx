@@ -1,5 +1,6 @@
 import PropTypes from 'prop-types';
 import {
+  Button,
   FormControl,
   FormLabel,
   HStack,
@@ -34,18 +35,13 @@ const MemberGroupSettings = ({ settings, onChange }) => {
     <>
       <Menu closeOnSelect={false} onClose={validateSettings}>
         <MenuButton
+          as={Button}
           w='4rem'
           h='4rem'
           px={4}
           py={2}
           ml='1rem'
           transition='all 0.2s'
-          borderRadius='md'
-          borderWidth='1px'
-          color='gray.600'
-          _dark={{ bg: 'gray.700', color: 'gray.400' }}
-          _hover={{ bg: 'gray.400' }}
-          _expanded={{ bg: 'blue.400' }}
           _focus={{ boxShadow: 'outline' }}
         >
           <SettingsIcon />

@@ -51,7 +51,7 @@ const SelectCaptains = ({ pool, numTeams, onChange }) => {
       direction='row'
        w='50%'
        maxH='100%' 
-       overflowY='scroll'
+       overflowY='auto'
        flex='1 1 0'
        justify='space-evenly' 
        align='flex-start'>
@@ -77,6 +77,7 @@ const SelectCaptains = ({ pool, numTeams, onChange }) => {
           ))
         }
       </List>
+
       <VStack alignSelf='center' spacing={4}>
         <Button onClick={swapCaptain}>
           <GoArrowBoth />
@@ -85,6 +86,7 @@ const SelectCaptains = ({ pool, numTeams, onChange }) => {
           <FaRandom />
         </Button>
       </VStack>
+      
       <List spacing={4} w='100%'>
         <Center>
           <Heading>

@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
-import { NotificationContainer } from "react-notifications";
 import useAuth, { AuthProvider } from "./contexts/Auth";
-import CreateScrim from "./components/CreateScrim";
 import Home from "./components/Home";
 import Navbar from "./components/Navbar";
 import LoginForm from "./components/LoginForm";
@@ -12,21 +10,22 @@ import InHouseLanding from "./components/InHouseLanding";
 import Profile from "./components/Profile";
 import ConfirmCode from "./components/ConfirmCode";
 import CreateScrimContainer from "./components/create-scrim/CreateScrimContainer";
-import { Dimmer, Loader } from "semantic-ui-react";
 import API from "./api/index.js";
+import { ERROR_TOAST, handleError } from "./utils";
+import { useToast } from '@chakra-ui/react';
 
 function App() {
   const [initialUser, setInitialUser] = useState();
   const [loading, setLoading] = useState(true);
+  const toast = useToast(ERROR_TOAST);
 
   useEffect(() => {
     const getCurrentUser = async () => {
       try {
         const response = await API.getCurrentUser();
-        setInitialUser(response.user);
-        setLoading(false);
+        setInitialUser(response?.user);
       } catch (err) {
-        setLoading(false);
+        toast({ description: handleError(err).message });
       } finally {
         setLoading(false);
       }
@@ -37,7 +36,6 @@ function App() {
 
   return (
     <div> 
-      <NotificationContainer />
       {!loading && (
         <AuthProvider initialUser={initialUser}>
           <Navbar />
@@ -97,9 +95,7 @@ function PrivateRoute({ children, redirectTo = "/login" }) {
   const auth = useAuth();
   if (auth.loading) {
     return (
-      <Dimmer>
-        <Loader active />
-      </Dimmer>
+      <Spinner />
     );
   }
 

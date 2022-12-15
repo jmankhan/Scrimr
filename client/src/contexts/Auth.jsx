@@ -8,6 +8,7 @@ import React, {
 } from "react";
 import { useLocation } from "react-router-dom";
 import API from "../api";
+import { handleError } from "../utils";
 const AuthContext = createContext();
 
 export function AuthProvider({ initialUser, children }) {
@@ -33,7 +34,7 @@ export function AuthProvider({ initialUser, children }) {
       const response = await API.getCurrentUser();
       setUser(response.user);
     } catch (err) {
-      setError(err.response.data.message);
+      setError(handleError(err).message);
       throw err;
     } finally {
       setLoading(false);

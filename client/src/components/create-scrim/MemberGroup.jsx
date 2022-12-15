@@ -2,12 +2,7 @@ import { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import Member from './Member';
 import {
-  Box,
-  
-  HStack,
-  Select,
   SimpleGrid,
-  VStack
 } from '@chakra-ui/react';
 import { CREATEPOOL_SORT_NAME, CREATEPOOL_SORT_RANK } from '../../utils';
 
@@ -54,4 +49,4 @@ MemberGroup.propTypes = {
   onRemove: PropTypes.func
 }
 
-export { MemberGroup }
+export default MemberGroup;

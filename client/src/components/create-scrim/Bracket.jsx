@@ -62,10 +62,8 @@ const Bracket = ({ teams }) => {
       const firstHalf = newIndices.slice(0, half);
       const secondHalf = newIndices.slice(half, numTeams).reverse();
       for (let i=0; i<firstHalf.length; i++) {
-        match.push([
-          matchTeams[firstHalf[i]]?.id, 
-          matchTeams[secondHalf[i]]?.id
-        ]);
+        const sortedMatchTeams = [matchTeams[firstHalf[i]], matchTeams[secondHalf[i]]].sort((a, b) => b.drafOrder - a.draftOrder);
+        match.push(sortedMatchTeams.map(t => t.id));
       }
 
       indices.push(indices.shift());

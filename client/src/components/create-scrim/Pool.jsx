@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
-import Member from './Member';
 import {
   Alert,
   AlertIcon,
@@ -9,11 +8,13 @@ import {
   VStack,
   useToast 
 } from '@chakra-ui/react';
-import AutoComplete from './AutoComplete';
-import { MemberGroup } from './MemberGroup';
-import MemberGroupFilters from './MemberGroupFilters';
 import { ERROR_TOAST } from '../../utils';
+import AutoComplete from './AutoComplete';
+import MemberGroup from './MemberGroup';
+import MemberGroupFilters from './MemberGroupFilters';
+import MemberGroupImport from './MemberGroupImport';
 import MemberGroupSettings from './MemberGroupSettings';
+
 
 const Pool = ({ pool = [], numTeams, teamSize, onChange }) => {
   const [summoners, setSummoners] = useState(pool?.map(m => m.summoner) ?? []);
@@ -48,7 +49,7 @@ const Pool = ({ pool = [], numTeams, teamSize, onChange }) => {
         <AutoComplete placeholder="Search for a summoner" onSelect={addSummoner} />
         <MemberGroupFilters onChange={data => setFilters({ ...filters, ...data })} filters={filters} />
         <MemberGroupSettings onChange={data => setSettings({...settings, ...data })} settings={settings} />
-        {/* <MemberGroupImport onChange={data => setSummoners({ summoners: summoners.concat(data)})} /> */}
+        <MemberGroupImport onChange={data => setSummoners(summoners.concat(data))} />
       </Center>
       <MemberGroup filters={filters} members={summoners} canRemove onRemove={removeMember} canUpdate />
     </VStack>

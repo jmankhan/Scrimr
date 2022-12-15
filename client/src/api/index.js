@@ -32,6 +32,11 @@ class API {
     return response.data;
   }
 
+  static createSummoners = async (names) => {
+    const response = await client.post(`/summoner/bulk`, names);
+    return response.data;
+  }
+
   static createTeams = async (teams) => {
     const response = await client.post("/team", [...teams]);
     return response.data;
@@ -43,7 +48,7 @@ class API {
   };
 
   static deleteMembersForScrim = async (scrimId) => {
-    const response = await client.delete(`/member?scrimId={scrimId}`);
+    const response = await client.delete(`/member?scrimId=${scrimId}`);
     return response.data;
   }
 
